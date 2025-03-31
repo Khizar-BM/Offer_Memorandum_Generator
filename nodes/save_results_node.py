@@ -1,9 +1,221 @@
 from state import GraphState
 import os
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+import re
+
+
+def format_section_title(document, title):
+    """Add and format a section title"""
+    heading = document.add_heading(title, level=1)
+    heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    for run in heading.runs:
+        run.font.size = Pt(16)
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(0, 0, 128)  # Navy blue color
+    
+    # Add some space after the heading
+    document.add_paragraph()
+
+
+def add_bullet_list(document, items):
+    """Add a bullet list to the document"""
+    for item in items:
+        p = document.add_paragraph()
+        p.style = 'List Bullet'
+        p.add_run(item.strip())
+
+
+def add_two_column_facts(document, facts):
+    """Add facts in a two-column layout"""
+    table = document.add_table(rows=0, cols=2)
+    table.style = 'Table Grid'
+    
+    # Split facts into two columns
+    facts_list = [fact.strip() for fact in facts.split('|')]
+    mid_point = len(facts_list) // 2 + len(facts_list) % 2
+    
+    left_column = facts_list[:mid_point]
+    right_column = facts_list[mid_point:]
+    
+    # Add rows to make both columns equal length
+    max_rows = max(len(left_column), len(right_column))
+    for i in range(max_rows):
+        row = table.add_row()
+        
+        # Add left column item
+        if i < len(left_column):
+            row.cells[0].text = left_column[i]
+            
+        # Add right column item
+        if i < len(right_column):
+            row.cells[1].text = right_column[i]
+    
+    # Add some space after the table
+    document.add_paragraph()
+
+
+def format_rich_text(document, content):
+    """Format text with proper headings and paragraphs"""
+    paragraphs = content.split('\n')
+    i = 0
+    
+    while i < len(paragraphs):
+        paragraph = paragraphs[i].strip()
+        
+        # Skip empty paragraphs
+        if not paragraph:
+            i += 1
+            continue
+        
+        # Check for headings
+        if paragraph.startswith('### '):
+            # Level 3 heading
+            heading_text = paragraph[4:].strip()
+            heading = document.add_heading(heading_text, level=2)
+            for run in heading.runs:
+                run.font.bold = True
+        elif paragraph.startswith('#### '):
+            # Level 4 heading
+            heading_text = paragraph[5:].strip()
+            heading = document.add_heading(heading_text, level=3)
+            for run in heading.runs:
+                run.font.bold = True
+        elif paragraph.startswith('**Business Broker Takeaways:**'):
+            # Special formatting for Business Broker Takeaways
+            takeaway_heading = document.add_heading('Business Broker Takeaways:', level=2)
+            for run in takeaway_heading.runs:
+                run.font.bold = True
+                
+            # Process numbered points that follow
+            j = i + 1
+            while j < len(paragraphs) and re.match(r'^\d+\.\s+\*\*', paragraphs[j].strip()):
+                point = paragraphs[j].strip()
+                # Extract the number and title
+                match = re.match(r'(\d+)\.\s+\*\*([^:]+):\*\*\s*(.*)', point)
+                if match:
+                    number, title, content = match.groups()
+                    p = document.add_paragraph()
+                    p.style = 'List Number'
+                    run = p.add_run(f"{title}: ")
+                    run.bold = True
+                    p.add_run(content)
+                else:
+                    # If the pattern doesn't match exactly, just add as is
+                    p = document.add_paragraph()
+                    p.style = 'List Number'
+                    p.add_run(re.sub(r'^\d+\.\s+', '', point))
+                j += 1
+            
+            # Skip the processed points
+            i = j - 1
+        else:
+            # Regular paragraph
+            document.add_paragraph(paragraph)
+        
+        i += 1
+
+
+def generate_word_document(om_sections, output_dir):
+    """Generate a Word document with all OM sections"""
+    # Create a new Word document
+    doc = Document()
+    
+    # Set document margins
+    sections = doc.sections
+    for section in sections:
+        section.top_margin = Inches(0.8)
+        section.bottom_margin = Inches(0.8)
+        section.left_margin = Inches(1)
+        section.right_margin = Inches(1)
+    
+    # Title page
+    title = doc.add_heading('OFFER MEMORANDUM', level=0)
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    for run in title.runs:
+        run.font.size = Pt(24)
+        run.font.bold = True
+    
+    # Add a page break after title page
+    doc.add_page_break()
+    
+    # 1. Marketplace content with Key Valuation Points
+    format_section_title(doc, "MARKETPLACE CONTENT")
+    format_rich_text(doc, om_sections.get('marketplace_overview', ''))
+    
+    # Add Key Valuation Points as bullets at the end of marketplace content
+    doc.add_heading('Key Valuation Points', level=2)
+    facts_sheet = om_sections.get('facts_sheet', '')
+    facts_list = [fact.strip() for fact in facts_sheet.split('|')]
+    add_bullet_list(doc, facts_list)
+    
+    # Add page break
+    doc.add_page_break()
+    
+    # 2. Company Intro with KVP and Scaling Opportunities
+    format_section_title(doc, "COMPANY INTRODUCTION")
+    format_rich_text(doc, om_sections.get('company_intro', ''))
+    
+    # Add Key Valuation Points again
+    doc.add_heading('Key Valuation Points', level=2)
+    add_bullet_list(doc, facts_list)
+    
+    # Add Scaling Opportunities
+    doc.add_heading('Scaling Opportunities', level=2)
+    scaling_opps = om_sections.get('scaling_opportunities', '')
+    opps_list = [opp.strip().lstrip('> ') for opp in scaling_opps.split('\n') if opp.strip()]
+    add_bullet_list(doc, opps_list)
+    
+    # Add page break
+    doc.add_page_break()
+    
+    # 3. Company Overview
+    format_section_title(doc, "COMPANY OVERVIEW")
+    format_rich_text(doc, om_sections.get('company_overview', ''))
+    
+    # Add page break
+    doc.add_page_break()
+    
+    # 4. Facts Sheet as two columns
+    format_section_title(doc, "FACTS SHEET")
+    add_two_column_facts(doc, facts_sheet)
+    
+    # Add page break
+    doc.add_page_break()
+    
+    # 5. About Us
+    format_section_title(doc, "ABOUT US")
+    format_rich_text(doc, om_sections.get('about_us', ''))
+    
+    # Add page break
+    doc.add_page_break()
+    
+    # 6. Key Methods to Scale
+    format_section_title(doc, "KEY METHODS TO SCALE")
+    # Fix the formatting issue with Digital Marketing and Brand Engagement heading
+    scaling_strategy = om_sections.get('scaling_strategy', '')
+    # Ensure "Digital Marketing and Brand Engagement." is correctly formatted 
+    scaling_strategy = scaling_strategy.replace("#### Digital Marketing and Brand Engagement.", "#### Digital Marketing and Brand Engagement")
+    format_rich_text(doc, scaling_strategy)
+    
+    # Add page break
+    doc.add_page_break()
+    
+    # 7. Industry Overview
+    format_section_title(doc, "INDUSTRY OVERVIEW")
+    format_rich_text(doc, om_sections.get('industry_overview', ''))
+    
+    # Save the document
+    output_file = f"{output_dir}/Offer_Memorandum.docx"
+    doc.save(output_file)
+    print(f"Word document generated successfully: {output_file}")
+    
+    return output_file
 
 
 def save_results_node(state: GraphState) -> GraphState:
-    """Save the generated OM sections to files"""
+    """Save the generated OM sections to files and create a Word document"""
     om_sections = state.get("om_sections", {})
     print("Generating OM Document...")
     
@@ -15,7 +227,7 @@ def save_results_node(state: GraphState) -> GraphState:
         output_dir = "output"
         os.makedirs(output_dir, exist_ok=True)
         
-        # Create a combined file
+        # Create a combined markdown file
         with open(f"{output_dir}/full_offer_memorandum.md", "w") as full_om:
             full_om.write("# OFFER MEMORANDUM\n\n")
             
@@ -33,8 +245,11 @@ def save_results_node(state: GraphState) -> GraphState:
                 full_om.write(f"{content}\n\n")
                 full_om.write("---\n\n")
         
+        # Generate Word document
+        word_doc_path = generate_word_document(om_sections, output_dir)
+        
         print(f"Offer Memorandum generated successfully in the '{output_dir}' directory.")
-        return {**state, "error": None}
+        return {**state, "word_document_path": word_doc_path, "error": None}
     except Exception as e:
         return {**state, "error": f"Failed to save results: {str(e)}"}
 

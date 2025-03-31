@@ -1,3 +1,3 @@
 # Facts Sheet
 
-11 Years in Business| 59.65% Repeat Customer Rate| $116 Average Order Value| 400-500 Items Available Weekly| Quick Inventory Turnover: 30 Days| 261,791 Email Contacts| 30 Hours/Week Owner Commitment
+11 Years Operational History| $116 Average Order Value| 59.65% Repeat Customer Rate| 4000 sq ft Owned Warehouse| 261,791 Marketing Subscribers| 60-100 Products Shipped Daily| $78,000+ Top Customer Lifetime Value
