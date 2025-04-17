@@ -174,24 +174,28 @@ def generate_word_document(om_sections, output_dir):
     format_section_title(doc, "COMPANY OVERVIEW")
     format_rich_text(doc, om_sections.get('company_overview', ''))
     
+    # 4. Company Summary after Company Overview
+    doc.add_heading('Company Summary', level=2)
+    format_rich_text(doc, om_sections.get('company_summary', ''))
+    
     # Add page break
     doc.add_page_break()
     
-    # 4. Facts Sheet as two columns
+    # 5. Facts Sheet as two columns
     format_section_title(doc, "FACTS SHEET")
     add_two_column_facts(doc, facts_sheet)
     
     # Add page break
     doc.add_page_break()
     
-    # 5. About Us
+    # 6. About Us
     format_section_title(doc, "ABOUT US")
     format_rich_text(doc, om_sections.get('about_us', ''))
     
     # Add page break
     doc.add_page_break()
     
-    # 6. Key Methods to Scale
+    # 7. Key Methods to Scale
     format_section_title(doc, "KEY METHODS TO SCALE")
     # Fix the formatting issue with Digital Marketing and Brand Engagement heading
     scaling_strategy = om_sections.get('scaling_strategy', '')
@@ -202,7 +206,7 @@ def generate_word_document(om_sections, output_dir):
     # Add page break
     doc.add_page_break()
     
-    # 7. Industry Overview
+    # 8. Industry Overview
     format_section_title(doc, "INDUSTRY OVERVIEW")
     format_rich_text(doc, om_sections.get('industry_overview', ''))
     

@@ -29,6 +29,7 @@ def scrape_website_node(state: GraphState) -> GraphState:
 
         return {"website_data": website_data}
     except Exception as e:
+        print(f"Failed to scrape website: {str(e)}")
         return {"error": f"Failed to scrape website: {str(e)}"}
 
 

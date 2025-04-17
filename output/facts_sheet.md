@@ -1,3 +1,3 @@
 # Facts Sheet
 
-11 Years Operational History| $116 Average Order Value| 59.65% Repeat Customer Rate| 4000 sq ft Owned Warehouse| 261,791 Marketing Subscribers| 60-100 Products Shipped Daily| $78,000+ Top Customer Lifetime Value
+Established Dual Brand Presence| $350k Current Inventory Value| 90% Sales Through Amazon| $7.57 Billion Market Size (2023)| 5% Repeat Customer Rate| Nearly 20,000 SKUs Available| 5,000 Sq Ft Warehouse

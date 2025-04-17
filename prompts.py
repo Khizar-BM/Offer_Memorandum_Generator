@@ -9,6 +9,8 @@ section_generator_prompt_template = """
     
     Here are the instructions specific to the {section_title} section:
     {instructions}
+
+    You MUST start your response with "Website Closers® presents"
     """
     
 
@@ -28,7 +30,8 @@ facts_sheet_prompt_template = """
     """
 
 scaling_strategy_prompt_template = """
-    You are an expert writer and analyst used to generating Offer Memorandums. You are tasked with identifying the key methods for scaling a particular business business.
+    You are an expert writer and analyst used to generating Offer Memorandums. You are tasked with identifying the key methods for scaling a particular business.
+    Frame the scaling strategy as a confident roadmap, not a wishlist. Be specific, back it with performance insights, and align it with what’s already working. Speak the language of both marketers and investors — strategic but concrete, aspirational but grounded in numbers.
     
     Use the following context about the business:
     {context}
@@ -83,6 +86,8 @@ marketplace_overview_prompt_template = """
     
     Here are the instructions specific to the Marketplace Content section:
     {instructions}
+
+    You MUST start your response with "Website Closers® presents"
     
     """
 

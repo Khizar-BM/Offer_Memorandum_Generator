@@ -10,58 +10,166 @@ from nodes.save_results_node import save_results_node
 from nodes.load_interview_data_node import load_interview_data
 from nodes.scaling_opportunity_node import scaling_strategy_node
 from nodes.scraping_node import scrape_website_node
+from nodes.company_overview_node import company_overview_node
 from state import GraphState
 from dotenv import load_dotenv
-# from nodes.website_scraper_node import scrape_website_node, WebsiteScraperInput
-from nodes.company_overview_node import company_overview_node
+from langgraph.types import StreamWriter
+from functools import partial
 from langgraph.graph import StateGraph, END, START
 
 # Load environment variables
 load_dotenv()
 
-
-
-# # Define the nodes (steps) in our workflow
-
-
-
-# def process_website(state: GraphState) -> GraphState:
-#     """Process website data"""
-#     website_url = state.get("website_url", "")
+# Wrapper functions to add streaming capabilities to nodes
+def stream_node_wrapper(node_func, node_name, node_idx, total_nodes, node_descriptions):
+    """Wraps a node function to add streaming progress updates"""
     
-#     if not website_url:
-#         return {**state, "website_data": "", "error": "No website URL provided"}
+    def wrapped_node(state: GraphState, writer: StreamWriter = None):
+        # Get the human-readable description
+        description = node_descriptions.get(node_name, node_name)
+        
+        # Calculate progress (start of this node)
+        progress = node_idx / total_nodes
+        
+        # Emit progress update at the start
+        if writer:
+            writer({
+                "progress_update": {
+                    "status": description,
+                    "progress": progress,
+                    "node": node_name
+                }
+            })
+        
+        # Call the original node function
+        result = node_func(state)
+        
+        # Calculate progress (end of this node)
+        progress = min((node_idx + 1) / total_nodes, 0.99)
+        
+        # Emit progress update at the end
+        if writer:
+            writer({
+                "progress_update": {
+                    "status": f"Completed: {description}",
+                    "progress": progress,
+                    "node": node_name
+                }
+            })
+        
+        return result
     
-#     # Call the website scraper node
-#     scraper_input = {"url": website_url}
-#     scraper_result = scrape_website_node(scraper_input)
-    
-#     if scraper_result["status"] == "error":
-#         return {**state, "error": scraper_result["formatted_data"]}
-    
-#     return {**state, "website_data": scraper_result["formatted_data"], "error": None}
+    return wrapped_node
 
-
+def final_node_wrapper(node_func, node_name, node_descriptions):
+    """Wraps the final node to add the complete result to the progress update"""
+    
+    def wrapped_node(state: GraphState, writer: StreamWriter = None):
+        # Get the human-readable description
+        description = node_descriptions.get(node_name, node_name)
+        
+        # Emit progress update at the start
+        if writer:
+            writer({
+                "progress_update": {
+                    "status": description,
+                    "progress": 0.99,
+                    "node": node_name
+                }
+            })
+        
+        # Call the original node function
+        result = node_func(state)
+        
+        # Emit final progress update with the complete result
+        if writer:
+            writer({
+                "progress_update": {
+                    "status": "Generation Complete",
+                    "progress": 1.0,
+                    "node": node_name,
+                    "result": result
+                }
+            })
+        
+        return result
+    
+    return wrapped_node
 
 # Build the graph
 def build_graph():
     """Create and return the LangGraph workflow"""
     workflow = StateGraph(GraphState)
     
-    # Add nodes
-    workflow.add_node("load_interview_data", load_interview_data)
-    workflow.add_node("scrape_website", scrape_website_node)
-    workflow.add_node("consolidate_info", consolidate_info_node)
-    workflow.add_node("company_overview", company_overview_node)
-    workflow.add_node("marketplace_content", marketplace_content_node)
-    workflow.add_node("company_intro", company_intro_node)
-    workflow.add_node("company_facts", company_facts_node)
-    workflow.add_node("scaling_strategy", scaling_strategy_node)
-    workflow.add_node("company_summary", company_summary_node)
-    workflow.add_node("about_us", about_us_node)
-    workflow.add_node("industry_overview", industry_overview_node)
-    # workflow.add_node("process_website", process_website)
-    workflow.add_node("save_results", save_results_node)
+    # Node descriptions for human-readable status
+    node_descriptions = {
+        "load_interview_data": "Loading interview data",
+        "scrape_website": "Scraping website",
+        "consolidate_info": "Consolidating information",
+        "company_overview": "Generating Company Overview",
+        "marketplace_content": "Generating Marketplace Analysis",
+        "company_intro": "Generating Company Introduction",
+        "company_facts": "Generating Company Facts",
+        "scaling_strategy": "Generating Scaling Strategy",
+        "company_summary": "Generating Company Summary",
+        "about_us": "Generating About Us",
+        "industry_overview": "Generating Industry Overview",
+        "save_results": "Saving results"
+    }
+    
+    # Map node names to their function implementations
+    node_functions = {
+        "load_interview_data": load_interview_data,
+        "scrape_website": scrape_website_node,
+        "consolidate_info": consolidate_info_node,
+        "company_overview": company_overview_node,
+        "marketplace_content": marketplace_content_node,
+        "company_intro": company_intro_node,
+        "company_facts": company_facts_node,
+        "scaling_strategy": scaling_strategy_node,
+        "company_summary": company_summary_node,
+        "about_us": about_us_node,
+        "industry_overview": industry_overview_node,
+        "save_results": save_results_node
+    }
+    
+    # Define the node order and total count for progress calculation
+    node_order = [
+        "load_interview_data",
+        "scrape_website",
+        "consolidate_info",
+        "company_overview",
+        "marketplace_content",
+        "company_intro",
+        "company_facts",
+        "scaling_strategy",
+        "company_summary",
+        "about_us",
+        "industry_overview",
+        "save_results"
+    ]
+    total_nodes = len(node_order)
+    
+    # Add nodes with streaming wrappers
+    for idx, node_name in enumerate(node_order):
+        if node_name == "save_results":
+            # Special handling for the final node
+            wrapped_node = final_node_wrapper(
+                node_functions[node_name], 
+                node_name, 
+                node_descriptions
+            )
+        else:
+            # Regular nodes
+            wrapped_node = stream_node_wrapper(
+                node_functions[node_name], 
+                node_name, 
+                idx, 
+                total_nodes, 
+                node_descriptions
+            )
+        
+        workflow.add_node(node_name, wrapped_node)
     
     # Add edges - Define the flow
     workflow.add_edge(START, "load_interview_data")
@@ -77,12 +185,7 @@ def build_graph():
     workflow.add_edge("company_summary", "about_us")
     workflow.add_edge("about_us", "industry_overview")
     workflow.add_edge("industry_overview", "save_results")
-   
-    
-    # workflow.add_edge("save_results", END)
     workflow.add_edge("save_results", END)
-    
-    # Set the entry point
     
     return workflow
 
