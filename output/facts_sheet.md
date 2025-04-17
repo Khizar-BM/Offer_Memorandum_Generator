@@ -1,3 +1,3 @@
 # Facts Sheet
 
-Established Dual Brand Presence| $350k Current Inventory Value| 90% Sales Through Amazon| $7.57 Billion Market Size (2023)| 5% Repeat Customer Rate| Nearly 20,000 SKUs Available| 5,000 Sq Ft Warehouse
+10+ Years in Operation| Strong Amazon Seller Rating of 448| 93% Positive Feedback from Customers| $43.72 Average Order Value| 97% Inventory Managed via FBA| Potential to Tap into $1M+ Market for Flag Accessories| 4.5 Average Product Rating

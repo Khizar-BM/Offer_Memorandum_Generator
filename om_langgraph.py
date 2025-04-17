@@ -104,7 +104,7 @@ def build_graph():
     # Node descriptions for human-readable status
     node_descriptions = {
         "load_interview_data": "Loading interview data",
-        "scrape_website": "Scraping website",
+        "scrape_website": "Scraping websites",
         "consolidate_info": "Consolidating information",
         "company_overview": "Generating Company Overview",
         "marketplace_content": "Generating Marketplace Analysis",
