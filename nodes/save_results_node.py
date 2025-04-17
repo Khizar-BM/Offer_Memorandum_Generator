@@ -175,8 +175,14 @@ def generate_word_document(om_sections, output_dir):
     format_rich_text(doc, om_sections.get('company_overview', ''))
     
     # 4. Company Summary after Company Overview
-    doc.add_heading('Company Summary', level=2)
+    format_section_title(doc, "COMPANY SUMMARY")
+
     format_rich_text(doc, om_sections.get('company_summary', ''))
+    
+    # Add customer reviews section if available
+    if 'customer_reviews' in om_sections and om_sections['customer_reviews']:
+        format_section_title(doc, "CUSTOMER REVIEWS")
+        format_rich_text(doc, om_sections.get('customer_reviews', ''))
     
     # Add page break
     doc.add_page_break()

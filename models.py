@@ -23,3 +23,16 @@ class FireCrawlSchema(BaseModel):
     def __str__(self):
         return f"About Us: {self.about_us}\nWebsite Content: {self.website_content}"
 
+class ReviewsSchema(BaseModel):
+    five_star_reviews: List[str] = Field(
+        description="List of five-star reviews scraped from various platforms",
+        default=[]
+    )
+    total_count: int = Field(
+        description="Total count of five-star reviews found",
+        default=0
+    )
+    
+    def __str__(self):
+        return f"Five Star Reviews: {len(self.five_star_reviews)}\nTotal Count: {self.total_count}"
+

@@ -4,7 +4,7 @@ import time
 import io
 from dotenv import load_dotenv
 from om_langgraph import build_graph
-from models import FireCrawlSchema
+from models import FireCrawlSchema, ReviewsSchema
 from langgraph.graph import END
 from langgraph.types import StreamWriter
 
@@ -15,6 +15,10 @@ load_dotenv()
 if 'website_urls' not in st.session_state:
     st.session_state.website_urls = []
 
+# Initialize session state for review URLs if not already present
+if 'review_urls' not in st.session_state:
+    st.session_state.review_urls = []
+
 # Function to add a URL to the list
 def add_url():
     if st.session_state.url_input and st.session_state.url_input not in st.session_state.website_urls:
@@ -24,6 +28,16 @@ def add_url():
 # Function to remove a URL from the list
 def remove_url(url):
     st.session_state.website_urls.remove(url)
+
+# Function to add a review URL to the list
+def add_review_url():
+    if st.session_state.review_url_input and st.session_state.review_url_input not in st.session_state.review_urls:
+        st.session_state.review_urls.append(st.session_state.review_url_input)
+        st.session_state.review_url_input = ""
+
+# Function to remove a review URL from the list
+def remove_review_url(url):
+    st.session_state.review_urls.remove(url)
 
 # Page configuration
 st.set_page_config(
@@ -155,6 +169,34 @@ with tab1:
     else:
         st.info("No URLs added yet. Please add at least one website URL.")
     
+    # Review URLs section
+    st.markdown('<div class="section-title">Review URLs (Optional)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="info-text">Add URLs for platforms that may have customer reviews (Google Business, Yelp, etc.)</div>', unsafe_allow_html=True)
+    
+    # Review URL input with add button
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.text_input(
+            "Review URL:",
+            placeholder="https://www.google.com/business/...",
+            key="review_url_input"
+        )
+    with col2:
+        st.markdown('<div style="padding-top: 26px;"></div>', unsafe_allow_html=True)
+        st.button("Add Review URL", key="add_review_url", on_click=add_review_url)
+    
+    # Display review URLs with remove buttons
+    if st.session_state.review_urls:
+        st.markdown("### Added Review URLs:")
+        for url in st.session_state.review_urls:
+            col1, col2 = st.columns([5, 1])
+            with col1:
+                st.markdown(f"<div class='url-text'>{url}</div>", unsafe_allow_html=True)
+            with col2:
+                st.button("Remove", key=f"remove_review_{url}", on_click=remove_review_url, args=(url,))
+    else:
+        st.info("No review URLs added yet. This is optional.")
+    
     # Generate button
     if st.button("Generate Offer Memorandum", type="primary", disabled=not (interview_data and st.session_state.website_urls)):
         if not interview_data:
@@ -177,6 +219,8 @@ with tab1:
                     "interview_data": interview_data,
                     "website_urls": st.session_state.website_urls,
                     "website_data": FireCrawlSchema(about_us="", website_content=""),
+                    "review_urls": st.session_state.review_urls,
+                    "review_data": ReviewsSchema(five_star_reviews=[], total_count=0),
                     "om_sections": {},
                     "company_context": "",
                     "current_section": "Company Overview",
@@ -208,6 +252,7 @@ with tab1:
                                 status_placeholder.success("Offer Memorandum generated successfully!")
                                 st.session_state.om_results = result
                                 st.session_state.last_websites = st.session_state.website_urls
+                                st.session_state.last_review_urls = st.session_state.review_urls
                                 st.balloons()
                     
                     # If we didn't get a final result from the progress updates,
@@ -217,6 +262,7 @@ with tab1:
                         final_result = app.invoke(initial_state)
                         st.session_state.om_results = final_result
                         st.session_state.last_websites = st.session_state.website_urls
+                        st.session_state.last_review_urls = st.session_state.review_urls
                 
                 except Exception as e:
                     st.error(f"Error generating OM: {str(e)}")
@@ -237,10 +283,16 @@ with tab2:
     if "om_results" in st.session_state:
         results = st.session_state.om_results
         websites = st.session_state.last_websites
+        review_urls = st.session_state.get("last_review_urls", [])
         
         st.markdown("**Business Websites:**")
         for website in websites:
             st.markdown(f"- {website}")
+        
+        if review_urls:
+            st.markdown("**Review Websites:**")
+            for website in review_urls:
+                st.markdown(f"- {website}")
         
         # Get the sections from the results
         om_sections = results.get("om_sections", {})
