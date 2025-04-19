@@ -63,6 +63,8 @@ company_summary_prompt_template = """
 company_intro_prompt_template = """
     You are an expert writer used to generating Offer Memorandums. You are tasked with creating the Company Introduction section of an Offer Memorandum for a business.
     Highlight the strengths of the business.
+    Also ensure that there is not exact duplication of information from the Company Overview section, as duplication hurts SEO.
+
     
     Use the following context about the business:
     {context}
@@ -93,6 +95,8 @@ marketplace_overview_prompt_template = """
 
 about_us_prompt_template = """
     You are an expert business analyst and writer. Given the following context about a business, write an About Us section as it would appear on a website. Don't make it longer than 2 paragraphs.
+
+    {special_instructions}
     
     Use the following context about the business:
     {context}

@@ -28,6 +28,7 @@ def consolidate_info_node(state: GraphState) -> GraphState:
     interview_data = state.get("interview_data")
     fireCrawlData = state.get("website_data")
     reviewData = state.get("review_data", None)
+    is_portfolio = state.get("is_portfolio", False)
     
     website_data = f"""
     About Us: {fireCrawlData.about_us}
@@ -46,10 +47,17 @@ def consolidate_info_node(state: GraphState) -> GraphState:
 """
         # Process reviews for inclusion in the OM
         customer_reviews = process_reviews(reviewData.five_star_reviews)
-
+    
+    special_instructions = ""
+    if is_portfolio:
+        special_instructions = """
+        Special Instructions: The data contains information about multiple brands/businesses. Make sure to organize the information by brand/business clearly.
+        """
+    print(is_portfolio, special_instructions)
     consolidate_data_prompt_template = """
     You are an expert business analyst and writer. Given the following sources of data about a business, merge them into a single source of information. Keep as much information as possible from all sources.
-
+    Also clearly identify the name of the business they are trying to sell.
+    {special_instructions}
     Seller Interview Data:
     {interview_data}
 
@@ -57,6 +65,7 @@ def consolidate_info_node(state: GraphState) -> GraphState:
     {website_data}
     
     {reviews_section}
+
     """
 
     # Create the prompt
@@ -65,7 +74,8 @@ def consolidate_info_node(state: GraphState) -> GraphState:
         partial_variables={
             "interview_data": interview_data, 
             "website_data": website_data,
-            "reviews_section": reviews_section
+            "reviews_section": reviews_section,
+            "special_instructions": special_instructions
         },
         template=consolidate_data_prompt_template,
     )

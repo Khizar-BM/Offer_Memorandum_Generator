@@ -15,6 +15,7 @@ def company_intro_node(state: GraphState) -> GraphState:
     om_sections = {**state.get("om_sections", {})}
     company_overview = om_sections.get("company_overview", "")
     current_section = "company_intro"
+    is_portfolio = state.get("is_portfolio", False)
     
     section_title = ' '.join(word.capitalize() for word in current_section.split('_'))
     
@@ -23,9 +24,24 @@ def company_intro_node(state: GraphState) -> GraphState:
     example  =  company_intro_example
     # Combine context
     instructions = """
-Make sure to include the company's name in the introduction.
-Also ensure that there is not exact duplication of information from the Company Overview section, as duplication hurts SEO.
 """
+
+    if is_portfolio:
+        instructions += """
+        Special Instructions: The data contains information about multiple brands/businesses. Make sure to write accordingly, by taking inspiration from the following example:
+        Example:
+        This rapidly growing enterprise holds a collection of lucrative eCommerce Brands, with each featuring a flagship product sold only by that brand. Among them are a powerful waist-slimming hosiery brand, four undergarment outlets, two eyelash retailers, and a brand specializing in eyebrow shaping. Most brands are IP protected, with three additional trademarks pending, which will be leveraged to thwart competition.
+ 
+Their distinctive business approach outshines others in the eCommerce space by offering customers an exclusive subscription model, where they can sign up and pay a monthly fee between $30 and $35. Over the span of less than a year, management has elevated the net profit from subscriptions from $40,000 to almost $400,000, achieving margins of 70% and a 60% front-end subscription conversion rate. Modest estimates for 2024 anticipate seller discretionary earnings of over $4 million, with substantial growth potential stemming from additional products included in the booming subscription initiative. Beyond those, the company mainly drives traffic to its various sites via astute Facebook and Instagram ads managed in-house and email and SMS marketing handled by a proficient agency.
+ 
+This efficiently structured enterprise operates with minimal overhead costs, managing day-to-day activities through a highly skilled team committed to remaining with the business post-acquisition. The company boasts impressive metrics, including healthy average order values, 170,000 monthly visitors, and a gigantic email database of over 3 million individuals.
+ 
+The current owners are eager to facilitate a smooth transition for the buyer and maintain open communication until they feel entirely confident. Furthermore, the company has two full-time employees based in the US who are capable of overseeing most business aspects. Immediate scale prospects include launching all brands on Amazon after the success of one and amplifying the ad budget to maximize customer LTV and profitability fully.
+        """
+    else:
+        instructions += """
+        Make sure to include the company's name in the introduction.
+        """
 
     
     company_context += f"\n\nCompany Overview:\n{company_overview}"

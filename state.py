@@ -14,4 +14,5 @@ class GraphState(TypedDict):
     company_context: str  # Consolidated company context
     om_sections: Dict[str, str]  # Generated OM sections
     current_section: str  # Current section being processed
+    is_portfolio: bool  # Whether the om is for a portfolio company
     error: Optional[str]  # Any error messages

@@ -1,3 +1,3 @@
 # Facts Sheet
 
-9-Year-Old Business| 100% Made in USA Product Line| 92% of Sales via Amazon| 23% Repeat Customer Rate in 2024| $43.72 Average Order Value| 97% Inventory Turnover within 45 Days| Robust Growth Opportunities Identified
+21-Year-Old Technology Company| Over $5.5M in Annual Revenue| 40% of Revenue from Managed Services| 99% Client Satisfaction Rate| Inc. 5000 Distinction Five Times| Proprietary Management System (Avalon)| Zero Major Security Incidents in 5 Years

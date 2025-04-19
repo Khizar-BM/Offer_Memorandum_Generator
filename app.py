@@ -96,6 +96,13 @@ with st.sidebar:
         ["Enter Text", "Upload File"]
     )
     
+    # Portfolio company toggle
+    is_portfolio_company = st.checkbox(
+        "Is this for a portfolio company?",
+        value=True,
+        help="Check this if the OM is for a portfolio company"
+    )
+    
     # Display and adjust API key
     api_key = os.getenv("OPENAI_API_KEY", "")
     masked_key = "•" * (len(api_key) - 4) + api_key[-4:] if api_key else ""
@@ -224,6 +231,7 @@ with tab1:
                     "om_sections": {},
                     "company_context": "",
                     "current_section": "Company Overview",
+                    "is_portfolio": is_portfolio_company,
                     "error": None
                 }
                 
@@ -253,6 +261,7 @@ with tab1:
                                 st.session_state.om_results = result
                                 st.session_state.last_websites = st.session_state.website_urls
                                 st.session_state.last_review_urls = st.session_state.review_urls
+                                st.session_state.is_portfolio = is_portfolio_company
                                 st.balloons()
                     
                     # If we didn't get a final result from the progress updates,
@@ -263,6 +272,7 @@ with tab1:
                         st.session_state.om_results = final_result
                         st.session_state.last_websites = st.session_state.website_urls
                         st.session_state.last_review_urls = st.session_state.review_urls
+                        st.session_state.is_portfolio = is_portfolio_company
                 
                 except Exception as e:
                     st.error(f"Error generating OM: {str(e)}")
@@ -284,6 +294,7 @@ with tab2:
         results = st.session_state.om_results
         websites = st.session_state.last_websites
         review_urls = st.session_state.get("last_review_urls", [])
+        is_portfolio = st.session_state.get("is_portfolio", results.get("is_portfolio", False))
         
         st.markdown("**Business Websites:**")
         for website in websites:
@@ -293,6 +304,10 @@ with tab2:
             st.markdown("**Review Websites:**")
             for website in review_urls:
                 st.markdown(f"- {website}")
+        
+        # Display portfolio status
+        st.markdown("**Portfolio Company:**")
+        st.markdown("Yes" if is_portfolio else "No")
         
         # Get the sections from the results
         om_sections = results.get("om_sections", {})

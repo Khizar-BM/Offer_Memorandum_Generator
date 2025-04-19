@@ -11,17 +11,25 @@ def about_us_node(state: GraphState) -> GraphState:
     """Node implementation for generating an OM section"""
     company_context = state.get("company_context", "")
     current_section = "about_us"
+    is_portfolio = state.get("is_portfolio", False)
     
     section_title = ' '.join(word.capitalize() for word in current_section.split('_'))
     
     print(f"Generating {section_title}...")
+
+    special_instructions = ""
+
+    if is_portfolio:
+        special_instructions += """
+        Special Instructions: The data contains information about multiple brands/businesses. Make sure to write an About us section for each brand.
+        """
 
 
     
     # Create the prompt
     about_us_prompt = PromptTemplate(
         input_variables=[],
-        partial_variables={"context": company_context},
+        partial_variables={"context": company_context, "special_instructions": special_instructions},
         template=about_us_prompt_template,
     )
 
