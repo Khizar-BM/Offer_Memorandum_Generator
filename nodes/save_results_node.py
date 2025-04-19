@@ -24,7 +24,21 @@ def add_bullet_list(document, items):
     for item in items:
         p = document.add_paragraph()
         p.style = 'List Bullet'
-        p.add_run(item.strip())
+        
+        # Handle bold text formatting in list items
+        item_text = item.strip()
+        if '**' in item_text:
+            # Split by ** markers and handle bold formatting
+            parts = re.split(r'(\*\*)', item_text)
+            is_bold = False
+            for part in parts:
+                if part == '**':
+                    is_bold = not is_bold
+                elif part:
+                    run = p.add_run(part)
+                    run.bold = is_bold
+        else:
+            p.add_run(item_text)
 
 
 def add_two_column_facts(document, facts):
@@ -44,13 +58,39 @@ def add_two_column_facts(document, facts):
     for i in range(max_rows):
         row = table.add_row()
         
-        # Add left column item
+        # Add left column item with bold formatting
         if i < len(left_column):
-            row.cells[0].text = left_column[i]
+            cell = row.cells[0]
+            fact_text = left_column[i]
+            if '**' in fact_text:
+                parts = re.split(r'(\*\*)', fact_text)
+                paragraph = cell.paragraphs[0]
+                is_bold = False
+                for part in parts:
+                    if part == '**':
+                        is_bold = not is_bold
+                    elif part:
+                        run = paragraph.add_run(part)
+                        run.bold = is_bold
+            else:
+                cell.text = fact_text
             
-        # Add right column item
+        # Add right column item with bold formatting
         if i < len(right_column):
-            row.cells[1].text = right_column[i]
+            cell = row.cells[1]
+            fact_text = right_column[i]
+            if '**' in fact_text:
+                parts = re.split(r'(\*\*)', fact_text)
+                paragraph = cell.paragraphs[0]
+                is_bold = False
+                for part in parts:
+                    if part == '**':
+                        is_bold = not is_bold
+                    elif part:
+                        run = paragraph.add_run(part)
+                        run.bold = is_bold
+            else:
+                cell.text = fact_text
     
     # Add some space after the table
     document.add_paragraph()
@@ -69,8 +109,34 @@ def format_rich_text(document, content):
             i += 1
             continue
         
-        # Check for headings
-        if paragraph.startswith('### '):
+        # Check for headings and handle $1 placeholders that should be headings
+        if paragraph == '$1':
+            # This is a placeholder for a heading - check next paragraph to use as heading
+            if i + 1 < len(paragraphs) and paragraphs[i+1].strip():
+                heading_text = paragraphs[i+1].strip()
+                heading = document.add_heading(heading_text, level=2)
+                for run in heading.runs:
+                    run.font.bold = True
+                # Skip the next paragraph since we used it as heading
+                i += 2
+                continue
+            else:
+                # Just skip this placeholder if there's no text after it
+                i += 1
+                continue
+        elif paragraph.startswith('# '):
+            # Level 1 heading
+            heading_text = paragraph[2:].strip()
+            heading = document.add_heading(heading_text, level=1)
+            for run in heading.runs:
+                run.font.bold = True
+        elif paragraph.startswith('## '):
+            # Level 2 heading
+            heading_text = paragraph[3:].strip()
+            heading = document.add_heading(heading_text, level=2)
+            for run in heading.runs:
+                run.font.bold = True
+        elif paragraph.startswith('### '):
             # Level 3 heading
             heading_text = paragraph[4:].strip()
             heading = document.add_heading(heading_text, level=2)
@@ -111,8 +177,22 @@ def format_rich_text(document, content):
             # Skip the processed points
             i = j - 1
         else:
-            # Regular paragraph
-            document.add_paragraph(paragraph)
+            # Handle bold text formatting (**text**)
+            if '**' in paragraph:
+                p = document.add_paragraph()
+                # Split by ** markers
+                parts = re.split(r'(\*\*)', paragraph)
+                
+                is_bold = False
+                for part in parts:
+                    if part == '**':
+                        is_bold = not is_bold
+                    elif part:
+                        run = p.add_run(part)
+                        run.bold = is_bold
+            else:
+                # Regular paragraph
+                document.add_paragraph(paragraph)
         
         i += 1
 
@@ -121,6 +201,22 @@ def generate_word_document(om_sections, output_dir):
     """Generate a Word document with all OM sections"""
     # Create a new Word document
     doc = Document()
+    
+    # Preprocess all sections to fix common formatting issues
+    for section_key in om_sections:
+        content = om_sections[section_key]
+        if isinstance(content, str):
+            # Replace $1 markers followed by text with proper headings
+            content = re.sub(r'\$1\s*\n([^\n]+)', r'## \1', content)
+            
+            # Ensure proper Markdown formatting for bold text
+            content = re.sub(r'\*\*([^*]+)\*\*\s*(?!\n)', r'**\1**\n', content)
+            
+            # Clean up any inconsistent heading formatting
+            content = re.sub(r'##\s+([^\n]+)', r'## \1', content)
+            
+            # Update the section with cleaned content
+            om_sections[section_key] = content
     
     # Set document margins
     sections = doc.sections
@@ -164,7 +260,14 @@ def generate_word_document(om_sections, output_dir):
     # Add Scaling Opportunities
     doc.add_heading('Scaling Opportunities', level=2)
     scaling_opps = om_sections.get('scaling_opportunities', '')
-    opps_list = [opp.strip().lstrip('> ') for opp in scaling_opps.split('\n') if opp.strip()]
+    # Parse scaling opportunities, handling both bullet points and regular text
+    opps_list = []
+    for opp in scaling_opps.split('\n'):
+        opp = opp.strip()
+        if opp:
+            # Remove markdown bullet points and '>' quote markers
+            clean_opp = re.sub(r'^[>*\-•]+\s*', '', opp)
+            opps_list.append(clean_opp)
     add_bullet_list(doc, opps_list)
     
     # Add page break
@@ -176,7 +279,6 @@ def generate_word_document(om_sections, output_dir):
     
     # 4. Company Summary after Company Overview
     format_section_title(doc, "COMPANY SUMMARY")
-
     format_rich_text(doc, om_sections.get('company_summary', ''))
     
     # Add customer reviews section if available
@@ -203,10 +305,8 @@ def generate_word_document(om_sections, output_dir):
     
     # 7. Key Methods to Scale
     format_section_title(doc, "KEY METHODS TO SCALE")
-    # Fix the formatting issue with Digital Marketing and Brand Engagement heading
+    # Use the preprocessed scaling strategy content
     scaling_strategy = om_sections.get('scaling_strategy', '')
-    # Ensure "Digital Marketing and Brand Engagement." is correctly formatted 
-    scaling_strategy = scaling_strategy.replace("#### Digital Marketing and Brand Engagement.", "#### Digital Marketing and Brand Engagement")
     format_rich_text(doc, scaling_strategy)
     
     # Add page break

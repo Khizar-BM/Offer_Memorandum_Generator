@@ -1,3 +1,3 @@
 # Facts Sheet
 
-21-Year-Old Technology Company| Over $5.5M in Annual Revenue| 40% of Revenue from Managed Services| 99% Client Satisfaction Rate| Inc. 5000 Distinction Five Times| Proprietary Management System (Avalon)| Zero Major Security Incidents in 5 Years
+30+ Years of Operations| 500+ Active Clients| $5.5M Current Revenue| 40% Revenue from Managed Services| Presence in Two Major Markets| Proprietary Management System| Inc. 5000 Listing for 5 Years
