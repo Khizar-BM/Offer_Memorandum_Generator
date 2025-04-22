@@ -174,14 +174,11 @@ def build_graph():
         
         workflow.add_node(node_name, wrapped_node)
     
-  
     # Add edges - Define the flow
     workflow.add_edge(START, "load_interview_data")
-    workflow.add_edge(START, "scrape_website")
-    workflow.add_edge(START, "scrape_reviews")
-    workflow.add_edge("scrape_website", "consolidate_info")
+    workflow.add_edge("load_interview_data", "scrape_website")
+    workflow.add_edge("scrape_website", "scrape_reviews")
     workflow.add_edge("scrape_reviews", "consolidate_info")
-    workflow.add_edge("load_interview_data", "consolidate_info")
     workflow.add_edge("consolidate_info", "company_overview")
     workflow.add_edge("company_overview", "marketplace_content")
     workflow.add_edge("marketplace_content", "company_intro")
@@ -193,5 +190,6 @@ def build_graph():
     workflow.add_edge("industry_overview", "save_results")
     workflow.add_edge("save_results", END)
     
+
     return workflow
 

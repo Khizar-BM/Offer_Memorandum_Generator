@@ -4,40 +4,64 @@ import time
 import io
 from dotenv import load_dotenv
 from om_langgraph import build_graph
-from models import FireCrawlSchema, ReviewsSchema
+from models import PortfolioData
 from langgraph.graph import END
 from langgraph.types import StreamWriter
 
 # Load environment variables
 load_dotenv()
 
-# Initialize session state for URLs if not already present
-if 'website_urls' not in st.session_state:
-    st.session_state.website_urls = []
+# Initialize session state for portfolio businesses
+if 'portfolio_businesses' not in st.session_state:
+    st.session_state.portfolio_businesses = {}
+    
+# Initialize current business being edited
+if 'current_business' not in st.session_state:
+    st.session_state.current_business = ""
 
-# Initialize session state for review URLs if not already present
-if 'review_urls' not in st.session_state:
-    st.session_state.review_urls = []
+# Function to add a business to the portfolio
+def add_business():
+    business_name = st.session_state.business_name_input
+    if business_name and business_name not in st.session_state.portfolio_businesses:
+        st.session_state.portfolio_businesses[business_name] = {
+            "website_urls": [],
+            "review_urls": []
+        }
+        st.session_state.current_business = business_name
+        st.session_state.business_name_input = ""
 
-# Function to add a URL to the list
-def add_url():
-    if st.session_state.url_input and st.session_state.url_input not in st.session_state.website_urls:
-        st.session_state.website_urls.append(st.session_state.url_input)
-        st.session_state.url_input = ""
+# Function to remove a business from the portfolio
+def remove_business(business_name):
+    if business_name in st.session_state.portfolio_businesses:
+        del st.session_state.portfolio_businesses[business_name]
+        if st.session_state.current_business == business_name:
+            st.session_state.current_business = ""
 
-# Function to remove a URL from the list
-def remove_url(url):
-    st.session_state.website_urls.remove(url)
+# Function to add a URL to the current business
+def add_business_url():
+    business = st.session_state.current_business
+    url = st.session_state.business_url_input
+    if business and url and url not in st.session_state.portfolio_businesses[business]["website_urls"]:
+        st.session_state.portfolio_businesses[business]["website_urls"].append(url)
+        st.session_state.business_url_input = ""
 
-# Function to add a review URL to the list
-def add_review_url():
-    if st.session_state.review_url_input and st.session_state.review_url_input not in st.session_state.review_urls:
-        st.session_state.review_urls.append(st.session_state.review_url_input)
-        st.session_state.review_url_input = ""
+# Function to remove a URL from a business
+def remove_business_url(business, url):
+    if business in st.session_state.portfolio_businesses and url in st.session_state.portfolio_businesses[business]["website_urls"]:
+        st.session_state.portfolio_businesses[business]["website_urls"].remove(url)
 
-# Function to remove a review URL from the list
-def remove_review_url(url):
-    st.session_state.review_urls.remove(url)
+# Function to add a review URL to the current business
+def add_business_review_url():
+    business = st.session_state.current_business
+    url = st.session_state.business_review_input
+    if business and url and url not in st.session_state.portfolio_businesses[business]["review_urls"]:
+        st.session_state.portfolio_businesses[business]["review_urls"].append(url)
+        st.session_state.business_review_input = ""
+
+# Function to remove a review URL from a business
+def remove_business_review_url(business, url):
+    if business in st.session_state.portfolio_businesses and url in st.session_state.portfolio_businesses[business]["review_urls"]:
+        st.session_state.portfolio_businesses[business]["review_urls"].remove(url)
 
 # Page configuration
 st.set_page_config(
@@ -79,6 +103,49 @@ st.markdown("""
         flex-grow: 1;
         margin-right: 10px;
     }
+    .business-card {
+        border: 1px solid rgba(128, 128, 128, 0.2);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .business-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .portfolio-summary {
+        background-color: rgba(0, 102, 204, 0.1);
+        border: 1px solid rgba(0, 102, 204, 0.2);
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .portfolio-summary-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2196F3;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #2196F3;
+        padding-bottom: 8px;
+    }
+    .business-stat {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    }
+    .business-stat-label {
+        font-weight: 600;
+        color: inherit;
+    }
+    .business-stat-value {
+        font-weight: 600;
+        color: #2196F3;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -98,9 +165,9 @@ with st.sidebar:
     
     # Portfolio company toggle
     is_portfolio_company = st.checkbox(
-        "Is this for a portfolio company?",
+        "Is this for multiple businesses?",
         value=True,
-        help="Check this if the OM is for a portfolio company"
+        help="Check this if the OM is for multiple businesses in a portfolio"
     )
     
     # Display and adjust API key
@@ -148,195 +215,296 @@ with tab1:
             interview_data = uploaded_file.getvalue().decode("utf-8")
             st.success("File uploaded successfully!")
     
-    # Website URLs section
-    st.markdown('<div class="section-title">Website URLs</div>', unsafe_allow_html=True)
-    st.markdown('<div class="info-text">Add one or more business website URLs to scrape</div>', unsafe_allow_html=True)
+    # Business data input UI
+    st.markdown('<div class="section-title">Business Information</div>', unsafe_allow_html=True)
     
-    # URL input with add button
+    # Add business input
     col1, col2 = st.columns([3, 1])
     with col1:
         st.text_input(
-            "Website URL:",
-            placeholder="https://example.com",
-            key="url_input"
+            "Business Name:",
+            placeholder="Enter business name",
+            key="business_name_input"
         )
     with col2:
         st.markdown('<div style="padding-top: 26px;"></div>', unsafe_allow_html=True)
-        st.button("Add URL", on_click=add_url)
+        st.button("Add Business", on_click=add_business)
     
-    # Display URLs with remove buttons
-    if st.session_state.website_urls:
-        st.markdown("### Added URLs:")
-        for url in st.session_state.website_urls:
-            col1, col2 = st.columns([5, 1])
-            with col1:
-                st.markdown(f"<div class='url-text'>{url}</div>", unsafe_allow_html=True)
-            with col2:
-                st.button("Remove", key=f"remove_{url}", on_click=remove_url, args=(url,))
-    else:
-        st.info("No URLs added yet. Please add at least one website URL.")
+    # Default to a single business if none added and not in portfolio mode
+    if not st.session_state.portfolio_businesses and not is_portfolio_company:
+        st.session_state.portfolio_businesses["Main Business"] = {
+            "website_urls": [],
+            "review_urls": []
+        }
+        st.session_state.current_business = "Main Business"
     
-    # Review URLs section
-    st.markdown('<div class="section-title">Review URLs (Optional)</div>', unsafe_allow_html=True)
-    st.markdown('<div class="info-text">Add URLs for platforms that may have customer reviews (Google Business, Yelp, etc.)</div>', unsafe_allow_html=True)
-    
-    # Review URL input with add button
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.text_input(
-            "Review URL:",
-            placeholder="https://www.google.com/business/...",
-            key="review_url_input"
-        )
-    with col2:
-        st.markdown('<div style="padding-top: 26px;"></div>', unsafe_allow_html=True)
-        st.button("Add Review URL", key="add_review_url", on_click=add_review_url)
-    
-    # Display review URLs with remove buttons
-    if st.session_state.review_urls:
-        st.markdown("### Added Review URLs:")
-        for url in st.session_state.review_urls:
-            col1, col2 = st.columns([5, 1])
-            with col1:
-                st.markdown(f"<div class='url-text'>{url}</div>", unsafe_allow_html=True)
-            with col2:
-                st.button("Remove", key=f"remove_review_{url}", on_click=remove_review_url, args=(url,))
-    else:
-        st.info("No review URLs added yet. This is optional.")
-    
-    # Generate button
-    if st.button("Generate Offer Memorandum", type="primary", disabled=not (interview_data and st.session_state.website_urls)):
-        if not interview_data:
-            st.error("Please provide interview data")
-        elif not st.session_state.website_urls:
-            st.error("Please provide at least one website URL")
+    # Business selection for editing
+    if st.session_state.portfolio_businesses:
+        business_names = list(st.session_state.portfolio_businesses.keys())
+        
+        # If not portfolio mode and there's only one business, select it automatically
+        if not is_portfolio_company and len(business_names) == 1:
+            st.session_state.current_business = business_names[0]
+            selected_business = business_names[0]
         else:
-            with st.spinner("Generating Offer Memorandum..."):
-                # Progress bar and status updates
-                progress_placeholder = st.empty()
-                status_placeholder = st.empty()
-                progress_placeholder.progress(0)
-                
-                # Build the graph
-                workflow = build_graph()
-                app = workflow.compile()
-                
-                # Initialize with starting state
-                initial_state = {
-                    "interview_data": interview_data,
-                    "website_urls": st.session_state.website_urls,
-                    "website_data": FireCrawlSchema(about_us="", website_content=""),
-                    "review_urls": st.session_state.review_urls,
-                    "review_data": ReviewsSchema(five_star_reviews=[], total_count=0),
-                    "om_sections": {},
-                    "company_context": "",
-                    "current_section": "Company Overview",
-                    "is_portfolio": is_portfolio_company,
-                    "error": None
-                }
-                
-                try:
-                    # Stream using custom mode to receive progress_update chunks
-                    final_result = None
-                    
-                    for chunk in app.stream(initial_state, stream_mode="custom"):
-                        # Check if this is a progress update chunk
-                        if "progress_update" in chunk:
-                            update = chunk["progress_update"]
-                            status = update.get("status", "")
-                            progress = update.get("progress", 0)
-                            
-                            # Update the UI with progress information
-                            if status:
-                                status_placeholder.text(f"{status}")
-                            
-                            progress_placeholder.progress(progress)
-                            
-                            # Check if this is the final result
-                            result = update.get("result")
-                            if result and progress >= 0.99:
-                                final_result = result
-                                progress_placeholder.progress(1.0)
-                                status_placeholder.success("Offer Memorandum generated successfully!")
-                                st.session_state.om_results = result
-                                st.session_state.last_websites = st.session_state.website_urls
-                                st.session_state.last_review_urls = st.session_state.review_urls
-                                st.session_state.is_portfolio = is_portfolio_company
-                                st.balloons()
-                    
-                    # If we didn't get a final result from the progress updates,
-                    # use the final state from the graph execution
-                    if not final_result:
-                        # Run one more time to get the final state
-                        final_result = app.invoke(initial_state)
-                        st.session_state.om_results = final_result
-                        st.session_state.last_websites = st.session_state.website_urls
-                        st.session_state.last_review_urls = st.session_state.review_urls
-                        st.session_state.is_portfolio = is_portfolio_company
-                
-                except Exception as e:
-                    st.error(f"Error generating OM: {str(e)}")
+            # Business selection dropdown
+            selected_business = st.selectbox(
+                "Select business to edit:",
+                [""] + business_names,
+                index=0 if st.session_state.current_business == "" else business_names.index(st.session_state.current_business) + 1
+            )
+            
+            if selected_business != st.session_state.current_business:
+                st.session_state.current_business = selected_business
+        
+        # Display and edit selected business
+        if st.session_state.current_business:
+            business = st.session_state.current_business
+            
+            st.markdown(f'<div class="business-title">{business}</div>', unsafe_allow_html=True)
+            
+            # Add Remove Business button - only if portfolio mode or not the Main Business
+            if is_portfolio_company or business != "Main Business":
+                if st.button(f"Remove {business}", key=f"remove_{business}"):
+                    remove_business(business)
+                    st.rerun()
+            
+            # Website URLs section for this business
+            st.markdown("### Website URLs")
+            
+            # URL input with add button
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.text_input(
+                    "Website URL:",
+                    placeholder="https://example.com",
+                    key="business_url_input"
+                )
+            with col2:
+                st.markdown('<div style="padding-top: 26px;"></div>', unsafe_allow_html=True)
+                st.button("Add URL", on_click=add_business_url, key="add_business_url")
+            
+            # Display URLs with remove buttons
+            if st.session_state.portfolio_businesses[business]["website_urls"]:
+                for url in st.session_state.portfolio_businesses[business]["website_urls"]:
+                    col1, col2 = st.columns([5, 1])
+                    with col1:
+                        st.markdown(f"<div class='url-text'>{url}</div>", unsafe_allow_html=True)
+                    with col2:
+                        st.button("Remove", key=f"remove_{business}_{url}", on_click=remove_business_url, args=(business, url))
+            else:
+                st.info(f"No website URLs added for {business} yet.")
+            
+            # Review URLs section for this business
+            st.markdown("### Review URLs (Optional)")
+            
+            # Review URL input with add button
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.text_input(
+                    "Review URL:",
+                    placeholder="https://www.google.com/business/...",
+                    key="business_review_input"
+                )
+            with col2:
+                st.markdown('<div style="padding-top: 26px;"></div>', unsafe_allow_html=True)
+                st.button("Add Review URL", key="add_business_review_url", on_click=add_business_review_url)
+            
+            # Display review URLs with remove buttons
+            if st.session_state.portfolio_businesses[business]["review_urls"]:
+                for url in st.session_state.portfolio_businesses[business]["review_urls"]:
+                    col1, col2 = st.columns([5, 1])
+                    with col1:
+                        st.markdown(f"<div class='url-text'>{url}</div>", unsafe_allow_html=True)
+                    with col2:
+                        st.button("Remove", key=f"remove_review_{business}_{url}", on_click=remove_business_review_url, args=(business, url))
+            else:
+                st.info(f"No review URLs added for {business} yet. This is optional.")
+    else:
+        st.info("No businesses added yet. Please add at least one business.")
     
+    # Portfolio Summary - Only show in portfolio mode
+    if is_portfolio_company and st.session_state.portfolio_businesses:
+        st.markdown('<div class="portfolio-summary">', unsafe_allow_html=True)
+        st.markdown('<div class="portfolio-summary-title">Portfolio Summary</div>', unsafe_allow_html=True)
+        
+        for business_name, business_data in st.session_state.portfolio_businesses.items():
+            st.markdown(f"""
+            <div class="business-card">
+                <div class="business-title">{business_name}</div>
+                <div class="business-stat">
+                    <span class="business-stat-label">Website URLs:</span>
+                    <span class="business-stat-value">{len(business_data["website_urls"])}</span>
+                </div>
+                <div class="business-stat">
+                    <span class="business-stat-label">Review URLs:</span>
+                    <span class="business-stat-value">{len(business_data["review_urls"])}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Generate button and validation
+    generate_button_disabled = False
+    
+    if not interview_data:
+        generate_button_disabled = True
+    
+    # Validation - need at least one business with at least one website URL
+    valid_business = False
+    for business, data in st.session_state.portfolio_businesses.items():
+        if data["website_urls"]:
+            valid_business = True
+            break
+    
+    if not valid_business:
+        generate_button_disabled = True
+    
+    if st.button("Generate Offer Memorandum", type="primary", disabled=generate_button_disabled):
+        with st.spinner("Generating Offer Memorandum..."):
+            # Progress bar and status updates
+            progress_placeholder = st.empty()
+            status_placeholder = st.empty()
+            progress_placeholder.progress(0)
+            
+            # Build the graph
+            workflow = build_graph()
+            app = workflow.compile()
+            # app.get_graph().draw_mermaid_png(output_file_path="graph1.png")
+
+            
+            # Initialize portfolio data structure
+            portfolio_data = PortfolioData()
+            
+            # Get website and review URLs from portfolio businesses
+            portfolio_website_urls = {
+                business: data["website_urls"] 
+                for business, data in st.session_state.portfolio_businesses.items()
+            }
+            
+            portfolio_review_urls = {
+                business: data["review_urls"] 
+                for business, data in st.session_state.portfolio_businesses.items()
+            }
+            
+            # Initialize with starting state
+            initial_state = {
+                "interview_data": interview_data,
+                "portfolio_website_urls": portfolio_website_urls,
+                "portfolio_review_urls": portfolio_review_urls,
+                "portfolio_data": portfolio_data,
+                "om_sections": {},
+                "company_context": "",
+                "current_section": "Company Overview",
+                "is_portfolio": is_portfolio_company,
+                "error": None
+            }
+            
+            try:
+                # Stream using custom mode to receive progress_update chunks
+                final_result = None
+                
+                for chunk in app.stream(initial_state, stream_mode="custom"):
+                    # Check if this is a progress update chunk
+                    if "progress_update" in chunk:
+                        update = chunk["progress_update"]
+                        status = update.get("status", "")
+                        progress = update.get("progress", 0)
+                        
+                        # Update the UI with progress information
+                        if status:
+                            status_placeholder.text(f"{status}")
+                        
+                        progress_placeholder.progress(progress)
+                        
+                        # Check if this is the final result
+                        result = update.get("result")
+                        if result and progress >= 0.99:
+                            final_result = result
+                            progress_placeholder.progress(1.0)
+                            status_placeholder.success("Offer Memorandum generated successfully!")
+                            st.session_state.om_results = result
+                            st.session_state.is_portfolio = is_portfolio_company
+                            st.balloons()
+                
+                # If we didn't get a final result from the progress updates,
+                # use the final state from the graph execution
+                if not final_result:
+                    # Run one more time to get the final state
+                    final_result = app.invoke(initial_state)
+                    st.session_state.om_results = final_result
+                    st.session_state.is_portfolio = is_portfolio_company
+            
+            except Exception as e:
+                st.error(f"Error generating OM: {str(e)}")
+
     st.markdown("""
     <div class="info-text" style="margin-top: 30px;">
-        <b>How it works:</b><br>
-        1. Enter the seller interview data or upload a transcript file<br>
-        2. Provide one or more business website URLs for additional information<br>
-        3. Click "Generate Offer Memorandum" to create a comprehensive OM<br>
-        4. View the generated sections in the "View Results" tab
+        <em>Note: This tool uses AI to generate content based on the information provided.</em>
     </div>
     """, unsafe_allow_html=True)
 
 with tab2:
-    st.markdown('<div class="section-title">Generated Offer Memorandum</div>', unsafe_allow_html=True)
-    
     if "om_results" in st.session_state:
-        results = st.session_state.om_results
-        websites = st.session_state.last_websites
-        review_urls = st.session_state.get("last_review_urls", [])
-        is_portfolio = st.session_state.get("is_portfolio", results.get("is_portfolio", False))
+        result = st.session_state.om_results
         
-        st.markdown("**Business Websites:**")
-        for website in websites:
-            st.markdown(f"- {website}")
-        
-        if review_urls:
-            st.markdown("**Review Websites:**")
-            for website in review_urls:
-                st.markdown(f"- {website}")
-        
-        # Display portfolio status
-        st.markdown("**Portfolio Company:**")
-        st.markdown("Yes" if is_portfolio else "No")
-        
-        # Get the sections from the results
-        om_sections = results.get("om_sections", {})
-        
-        if not om_sections:
-            st.warning("No OM sections found in the results")
-        else:
+        if "word_document_path" in result:
+            st.success("Offer Memorandum generated successfully!")
+            
+            # Display download button for the Word document
+            with open(result["word_document_path"], "rb") as file:
+                st.download_button(
+                    label="Download Word Document",
+                    data=file,
+                    file_name="Offer_Memorandum.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+            
+            # Display each section
+            st.markdown("## Generated Sections")
+            
+            all_sections = [
+                ("Marketplace Overview", "marketplace_overview"),
+                ("Company Introduction", "company_intro"),
+                ("Company Overview", "company_overview"),
+                ("Company Summary", "company_summary"),
+                ("Facts Sheet", "facts_sheet"),
+                ("About Us", "about_us"),
+                ("Scaling Strategy", "scaling_strategy"),
+                ("Scaling Opportunities", "scaling_opportunities"),
+                ("Industry Overview", "industry_overview")
+            ]
+            
+            # Add customer reviews - handle both single and portfolio business reviews
+            review_sections = []
+            for key in result.get("om_sections", {}):
+                if key.startswith("customer_reviews_"):
+                    business_name = key[len("customer_reviews_"):]
+                    review_sections.append((f"Customer Reviews - {business_name}", key))
+                elif key == "customer_reviews":
+                    review_sections.append(("Customer Reviews", "customer_reviews"))
+            
+            # Add reviews to all sections
+            if review_sections:
+                all_sections.extend(review_sections)
+            
             # Create tabs for each section
-            section_tabs = st.tabs(list(om_sections.keys()))
+            tabs = st.tabs([section[0] for section in all_sections])
             
-            for i, (section_name, section_content) in enumerate(om_sections.items()):
-                with section_tabs[i]:
-                    st.markdown(section_content)
+            for i, (section_name, section_key) in enumerate(all_sections):
+                with tabs[i]:
+                    content = result.get("om_sections", {}).get(section_key, "")
+                    if content:
+                        st.markdown(content)
+                    else:
+                        st.info(f"No content generated for {section_name}")
         
-        # Check if we have the DOCX file path from the result
-        docx_path = results.get("word_document_path", "")
-        if docx_path and os.path.exists(docx_path):
-            # Read the DOCX file
-            with open(docx_path, "rb") as file:
-                docx_bytes = file.read()
-            
-            # Download button for the existing DOCX
-            st.download_button(
-                label="Download Offer Memorandum (DOCX)",
-                data=docx_bytes,
-                file_name="offer_memorandum.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            )
+        elif "error" in result and result["error"]:
+            st.error(f"Error: {result['error']}")
+        
         else:
-            st.warning("Generated DOCX file not found. Try regenerating the Offer Memorandum.")
+            st.warning("Generation completed but no document was produced.")
+    
     else:
-        st.info("No Offer Memorandum has been generated yet. Go to the 'Generate OM' tab to create one.") 
+        st.info("No results to display. Please generate an Offer Memorandum first.") 

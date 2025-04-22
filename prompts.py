@@ -26,6 +26,8 @@ facts_sheet_prompt_template = """
     Return the facts in a list of strings.
 
     ONLY WRITE 5-7 KEY VALUATION POINTS.
+
+    Make sure the facts are in short sentence-form like the example.
     
     """
 

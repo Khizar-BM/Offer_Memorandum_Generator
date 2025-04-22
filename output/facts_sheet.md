@@ -1,3 +1,3 @@
 # Facts Sheet
 
-30+ Years of Operations| 500+ Active Clients| $5.5M Current Revenue| 40% Revenue from Managed Services| Presence in Two Major Markets| Proprietary Management System| Inc. 5000 Listing for 5 Years
+9-Year-Old Business| 92% of Sales via Amazon| 23% Customer Repeat Rate| $43.72 Average Order Value| 95% Inventory Turnover in 45 Days| 14 Total SKUs Offered| 97% Fulfillment By Amazon

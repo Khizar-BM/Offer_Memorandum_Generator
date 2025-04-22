@@ -1,9 +1,8 @@
-from typing import List
+from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 
 
 class FactsSheet(BaseModel):
-
     facts: List[str] = Field(
         description="List of Key Valuation Points about the company. Minimum 5, Maximum 10"
     )
@@ -17,22 +16,32 @@ class ScalingStrategy(BaseModel):
     )
 
 class FireCrawlSchema(BaseModel):
-    about_us: str
-    website_content: str
-    # get it in str
-    def __str__(self):
-        return f"About Us: {self.about_us}\nWebsite Content: {self.website_content}"
+    about_us: str = Field(description="About us section from website")
+    website_content: str = Field(description="General content from the website")
 
-class ReviewsSchema(BaseModel):
-    five_star_reviews: List[str] = Field(
-        description="List of five-star reviews scraped from various platforms",
-        default=[]
-    )
-    total_count: int = Field(
-        description="Total count of five-star reviews found",
-        default=0
-    )
+class BusinessWebsiteData(BaseModel):
+    """Website data for a single business"""
+    business_name: str = Field(description="Name of the business")
+    about_us: str = Field(description="About us section from website")
+    website_content: str = Field(description="General content from the website")
+
+class BusinessReviewData(BaseModel):
+    """Review data for a single business"""
+    business_name: str = Field(description="Name of the business")
+    five_star_reviews: List[str] = Field(description="List of 5-star reviews for the business")
     
     def __str__(self):
-        return f"Five Star Reviews: {len(self.five_star_reviews)}\nTotal Count: {self.total_count}"
+        return f"{self.business_name} - Five Star Reviews: {len(self.five_star_reviews)}"
+
+
+class PortfolioData(BaseModel):
+    """Data structure for portfolio with multiple businesses"""
+    business_websites: Dict[str, BusinessWebsiteData] = Field(
+        default_factory=dict,
+        description="Website data for each business in the portfolio"
+    )
+    business_reviews: Dict[str, BusinessReviewData] = Field(
+        default_factory=dict,
+        description="Review data for each business in the portfolio"
+    )
 

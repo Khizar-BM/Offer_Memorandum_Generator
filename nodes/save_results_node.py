@@ -281,8 +281,19 @@ def generate_word_document(om_sections, output_dir):
     format_section_title(doc, "COMPANY SUMMARY")
     format_rich_text(doc, om_sections.get('company_summary', ''))
     
-    # Add customer reviews section if available
-    if 'customer_reviews' in om_sections and om_sections['customer_reviews']:
+    # Add customer reviews section
+    # Check for portfolio business reviews (keys like 'customer_reviews_BusinessName')
+    review_sections = [key for key in om_sections if key.startswith('customer_reviews_')]
+    
+    if review_sections:
+        # Portfolio business reviews - add each as a separate section
+        format_section_title(doc, "CUSTOMER REVIEWS")
+        
+        for review_key in review_sections:
+            # The review content already includes the business name as a heading
+            format_rich_text(doc, om_sections.get(review_key, ''))
+    elif 'customer_reviews' in om_sections and om_sections['customer_reviews']:
+        # Single business reviews
         format_section_title(doc, "CUSTOMER REVIEWS")
         format_rich_text(doc, om_sections.get('customer_reviews', ''))
     
@@ -343,7 +354,14 @@ def save_results_node(state: GraphState) -> GraphState:
             
             # Add each section to the full document
             for section_name, content in om_sections.items():
-                section_title = ' '.join(word.capitalize() for word in section_name.split('_'))
+                # Handle section titles for business-specific reviews
+                if section_name.startswith('customer_reviews_'):
+                    # Extract business name from the section key (format: customer_reviews_BusinessName)
+                    business_name = section_name[len('customer_reviews_'):]
+                    section_title = f'Customer Reviews - {business_name}'
+                else:
+                    # Regular section title formatting
+                    section_title = ' '.join(word.capitalize() for word in section_name.split('_'))
                 
                 # Write to individual file
                 with open(f"{output_dir}/{section_name}.md", "w") as section_file:

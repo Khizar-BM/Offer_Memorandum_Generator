@@ -1,4 +1,7 @@
-from models import FireCrawlSchema, ReviewsSchema
+from typing import List
+
+from pydantic import BaseModel
+from models import FireCrawlSchema, BusinessWebsiteData, BusinessReviewData, PortfolioData
 from state import GraphState
 from firecrawl import FirecrawlApp
 import os
@@ -10,29 +13,50 @@ FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
 
 
 def scrape_website_node(state: GraphState) -> GraphState:
-    """Node implementation for scraping a website"""
-    urls = state.get("website_urls", [])
+    """Node implementation for scraping websites"""
+    # Get URLs from portfolio sources
+    portfolio_urls = state.get("portfolio_website_urls", {})
     
-    # Check if URLs is empty
-    if not urls:
-        return {"error": "No URLs provided for scraping"}
+    # Initialize portfolio data if it doesn't exist
+    portfolio_data = state.get("portfolio_data", PortfolioData())
+    result = {}
     
-    #    use Firecrawl to scrape the websites with error handling
     try:
         app = FirecrawlApp(api_key=FIRECRAWL_API_KEY)
-        print(f"Scraping {len(urls)} websites...")
-        data = app.extract(
-            urls, 
-            {
-                'prompt': 'I need you to extract all the details you can about this business that can be helpful to write an offer memorendum about this business. ',
-                'schema': FireCrawlSchema.model_json_schema(),
-            }
-        )
-        print(data)
-
-        website_data = FireCrawlSchema(**data["data"])
-
-        return {"website_data": website_data}
+        
+        # Process portfolio URLs
+        for business_name, urls in portfolio_urls.items():
+            if not urls:
+                continue
+                
+            try:
+                print(f"Scraping {len(urls)} websites for business: {business_name}...")
+                data = app.extract(
+                    urls, 
+                    {
+                        'prompt': f'I need you to extract all the details you can about the business that can be helpful to write an offer memorendum. Identify this business specific information.',
+                        'schema': FireCrawlSchema.model_json_schema(),
+                    }
+                    )
+                
+                # Add business data to portfolio
+                business_data = BusinessWebsiteData(
+                    business_name=business_name,
+                    about_us=data["data"]["about_us"],
+                    website_content=data["data"]["website_content"]
+                )
+                portfolio_data.business_websites[business_name] = business_data
+                
+            except Exception as e:
+                print(f"Failed to scrape website for business: {business_name}. Error: {str(e)}")
+                continue
+            
+          
+        
+        # Add portfolio data to result
+        result["portfolio_data"] = portfolio_data
+        return result
+        
     except Exception as e:
         print(f"Failed to scrape websites: {str(e)}")
         return {"error": f"Failed to scrape websites: {str(e)}"}
@@ -40,46 +64,53 @@ def scrape_website_node(state: GraphState) -> GraphState:
 
 def scrape_reviews_node(state: GraphState) -> GraphState:
     """Node implementation for scraping reviews"""
-    urls = state.get("review_urls", [])
+    # Get URLs from portfolio sources
+    portfolio_review_urls = state.get("portfolio_review_urls", {})
+    # Get portfolio data from previous node
+    portfolio_data = state.get("portfolio_data", PortfolioData())
+    result = {}
+
+    class ReviewData(BaseModel):
+        reviews: List[str]
     
-    # Check if URLs is empty
-    if not urls:
-        # No error, just return empty reviews
-        return {"review_data": ReviewsSchema(five_star_reviews=[], total_count=0)}
-    
-    # Use Firecrawl to scrape reviews with error handling
     try:
         app = FirecrawlApp(api_key=FIRECRAWL_API_KEY)
-        print(f"Scraping {len(urls)} review sites...")
-        data = app.extract(
-            urls,
-            {
-                'prompt': 'Extract all five-star reviews for this business. Only include reviews with 5-star ratings.',
-                'schema': {
-                    "type": "object",
-                    "properties": {
-                        "five_star_reviews": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
+        
+        # Process portfolio review URLs
+        for business_name, urls in portfolio_review_urls.items():
+            if not urls:
+                continue
+
+            try:
+                print(f"Scraping {len(urls)} review sites for business: {business_name}...")
+                data = app.extract(
+                    urls,
+                    {
+                        'prompt': "Get all reviews from this page. After that, filter them by 5 star ratings if ratings are available",
+                        'schema': ReviewData.model_json_schema()
                     }
-                }
-            }
-        )
-        print(data)
+                )
+                
+                # Extract the five-star reviews
+                all_reviews = data["data"].get("reviews", [])
+                
+                # Add business reviews to portfolio
+                business_reviews = BusinessReviewData(
+                    business_name=business_name,
+                    five_star_reviews=all_reviews
+                )
+                portfolio_data.business_reviews[business_name] = business_reviews
+
+            except Exception as e:
+                print(f"Failed to scrape reviews for business: {business_name}. Error: {str(e)}")
+                continue
+            
+       
+    
+        # Add portfolio data to result
+        result["portfolio_data"] = portfolio_data
+        return result
         
-        # Extract the five-star reviews
-        all_reviews = data["data"].get("five_star_reviews", [])
-        
-        # Create ReviewsSchema instance
-        review_data = ReviewsSchema(
-            five_star_reviews=all_reviews,
-            total_count=len(all_reviews)
-        )
-        
-        return {"review_data": review_data}
     except Exception as e:
         print(f"Failed to scrape reviews: {str(e)}")
         return {"error": f"Failed to scrape reviews: {str(e)}"}

@@ -4,6 +4,7 @@ from langchain_openai import ChatOpenAI
 from state import GraphState
 from langchain_core.output_parsers import StrOutputParser
 from langchain.prompts import PromptTemplate
+from models import PortfolioData
 
 
 def process_reviews(reviews):
@@ -26,28 +27,43 @@ def process_reviews(reviews):
 def consolidate_info_node(state: GraphState) -> GraphState:
     """Consolidate interview data and website data into a single data structure using an LLM"""
     interview_data = state.get("interview_data")
-    fireCrawlData = state.get("website_data")
-    reviewData = state.get("review_data", None)
+    portfolio_data = state.get("portfolio_data", PortfolioData())
     is_portfolio = state.get("is_portfolio", False)
     
-    website_data = f"""
-    About Us: {fireCrawlData.about_us}
-    Website Content: {fireCrawlData.website_content}
-"""
+    # Initialize the OM sections if they don't exist
+    om_sections = state.get("om_sections", {})
+    
+    # Process reviews from portfolio data and add to OM sections
+    for business_name, review_data in portfolio_data.business_reviews.items():
+        if review_data and review_data.five_star_reviews and len(review_data.five_star_reviews) >= 5:
+            # Process reviews for inclusion in the OM
+            business_customer_reviews = process_reviews(review_data.five_star_reviews)
+            
+            # Add customer reviews to the OM sections with business name if in portfolio mode
+            # or without business name if not in portfolio mode
+            if business_customer_reviews:
+                if is_portfolio:
+                    review_key = f"customer_reviews_{business_name}"
+                    om_sections[review_key] = f"## {business_name} Customer Reviews\n\n{business_customer_reviews}"
+                else:
+                    om_sections["customer_reviews"] = business_customer_reviews
+    
+    # Prepare portfolio data for the prompt
+    formatted_portfolio_data = ""
+    for business_name, website_data in portfolio_data.business_websites.items():
+        formatted_portfolio_data += f"\n## {business_name} Website Data:\n"
+        formatted_portfolio_data += f"About Us: {website_data.about_us}\n"
+        formatted_portfolio_data += f"Website Content: {website_data.website_content}\n\n"
+        
+        # Add reviews for this business if available
+        if business_name in portfolio_data.business_reviews:
+            review_data = portfolio_data.business_reviews[business_name]
+            if review_data and review_data.five_star_reviews:
+                formatted_portfolio_data += f"Customer Reviews:\n"
+                for i, review in enumerate(review_data.five_star_reviews[:10]):  # Limit to 10 reviews
+                    formatted_portfolio_data += f"- \"{review}\"\n"
+                formatted_portfolio_data += "\n"
 
-    # Prepare reviews section if we have enough 5-star reviews
-    reviews_section = ""
-    customer_reviews = None
-    
-    if reviewData and reviewData.total_count >= 5:
-        reviews_list = "\n".join([f"- \"{review}\"" for review in reviewData.five_star_reviews])
-        reviews_section = f"""
-    Customer Reviews:
-    {reviews_list}
-"""
-        # Process reviews for inclusion in the OM
-        customer_reviews = process_reviews(reviewData.five_star_reviews)
-    
     special_instructions = ""
     if is_portfolio:
         special_instructions = """
@@ -61,10 +77,8 @@ def consolidate_info_node(state: GraphState) -> GraphState:
     Seller Interview Data:
     {interview_data}
 
-    Website Data:
-    {website_data}
-    
-    {reviews_section}
+    Additional Data:
+    {portfolio_data}
 
     """
 
@@ -73,8 +87,7 @@ def consolidate_info_node(state: GraphState) -> GraphState:
         input_variables=[],
         partial_variables={
             "interview_data": interview_data, 
-            "website_data": website_data,
-            "reviews_section": reviews_section,
+            "portfolio_data": formatted_portfolio_data,
             "special_instructions": special_instructions
         },
         template=consolidate_data_prompt_template,
@@ -86,13 +99,6 @@ def consolidate_info_node(state: GraphState) -> GraphState:
     chain = consolidate_data_prompt | llm | StrOutputParser()
     
     consolidated_data = chain.invoke({})
-    
-    # Initialize the OM sections if they don't exist
-    om_sections = state.get("om_sections", {})
-    
-    # Add customer reviews to the OM sections if available
-    if customer_reviews:
-        om_sections["customer_reviews"] = customer_reviews
     
     return {
         "company_context": consolidated_data,
