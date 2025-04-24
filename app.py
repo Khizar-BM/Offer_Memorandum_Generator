@@ -185,6 +185,12 @@ with st.sidebar:
         help="Check this if the OM is for multiple businesses in a portfolio"
     )
     
+    # Clear the "Main Business" entry when switching to portfolio mode
+    if is_portfolio_company and "Main Business" in st.session_state.portfolio_businesses:
+        if len(st.session_state.portfolio_businesses) == 1:  # Only remove if it's the only business
+            del st.session_state.portfolio_businesses["Main Business"]
+            st.session_state.current_business = ""
+            
     # Display and adjust API key
     api_key = os.getenv("OPENAI_API_KEY", "")
     masked_key = "•" * (len(api_key) - 4) + api_key[-4:] if api_key else ""
@@ -256,12 +262,19 @@ with tab1:
             st.button("Add Brand", on_click=add_business)
     
     # Default to a single business if none added and not in portfolio mode
-    if not st.session_state.portfolio_businesses and not is_portfolio_company:
-        st.session_state.portfolio_businesses["Main Business"] = {
-            "website_urls": [],
-            "review_urls": []
-        }
-        st.session_state.current_business = "Main Business"
+    if not is_portfolio_company:
+        if not st.session_state.portfolio_businesses:
+            st.session_state.portfolio_businesses["Main Business"] = {
+                "website_urls": [],
+                "review_urls": []
+            }
+            st.session_state.current_business = "Main Business"
+        elif "Main Business" not in st.session_state.portfolio_businesses:
+            # Create a "Main Business" entry and move existing data to it
+            first_business = list(st.session_state.portfolio_businesses.keys())[0]
+            st.session_state.portfolio_businesses["Main Business"] = st.session_state.portfolio_businesses[first_business]
+            del st.session_state.portfolio_businesses[first_business]
+            st.session_state.current_business = "Main Business"
     
     # Business selection for editing
     if st.session_state.portfolio_businesses:
