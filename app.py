@@ -242,17 +242,18 @@ with tab1:
         help="The parent company or overall business name for the portfolio"
     )
     
-    # Add business input
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.text_input(
-            "Business Name:",
-            placeholder="Enter business name",
-            key="business_name_input"
-        )
-    with col2:
-        st.markdown('<div style="padding-top: 26px;"></div>', unsafe_allow_html=True)
-        st.button("Add Business", on_click=add_business)
+    # Add business input - only show in portfolio mode
+    if is_portfolio_company:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.text_input(
+                "Business Name:",
+                placeholder="Enter business name",
+                key="business_name_input"
+            )
+        with col2:
+            st.markdown('<div style="padding-top: 26px;"></div>', unsafe_allow_html=True)
+            st.button("Add Business", on_click=add_business)
     
     # Default to a single business if none added and not in portfolio mode
     if not st.session_state.portfolio_businesses and not is_portfolio_company:
@@ -271,24 +272,30 @@ with tab1:
             st.session_state.current_business = business_names[0]
             selected_business = business_names[0]
         else:
-            # Business selection dropdown
-            selected_business = st.selectbox(
-                "Select business to edit:",
-                [""] + business_names,
-                index=0 if st.session_state.current_business == "" else business_names.index(st.session_state.current_business) + 1
-            )
-            
-            if selected_business != st.session_state.current_business:
+            # Business selection dropdown - only show in portfolio mode
+            if is_portfolio_company:
+                selected_business = st.selectbox(
+                    "Select business to edit:",
+                    [""] + business_names,
+                    index=0 if st.session_state.current_business == "" else business_names.index(st.session_state.current_business) + 1
+                )
+                
+                if selected_business != st.session_state.current_business:
+                    st.session_state.current_business = selected_business
+            else:
+                # In non-portfolio mode, just use the default business
+                selected_business = business_names[0]
                 st.session_state.current_business = selected_business
         
         # Display and edit selected business
         if st.session_state.current_business:
             business = st.session_state.current_business
             
-            st.markdown(f'<div class="business-title">{business}</div>', unsafe_allow_html=True)
-            
-            # Add Remove Business button - only if portfolio mode or not the Main Business
-            if is_portfolio_company or business != "Main Business":
+            # In portfolio mode, show the business title and remove button
+            if is_portfolio_company:
+                st.markdown(f'<div class="business-title">{business}</div>', unsafe_allow_html=True)
+                
+                # Add Remove Business button - only if portfolio mode or not the Main Business
                 if st.button(f"Remove {business}", key=f"remove_{business}"):
                     remove_business(business)
                     st.rerun()
@@ -317,7 +324,10 @@ with tab1:
                     with col2:
                         st.button("Remove", key=f"remove_{business}_{url}", on_click=remove_business_url, args=(business, url))
             else:
-                st.info(f"No website URLs added for {business} yet.")
+                if is_portfolio_company:
+                    st.info(f"No website URLs added for {business} yet.")
+                else:
+                    st.info("No website URLs added yet.")
             
             # Review URLs section for this business
             st.markdown("### Review URLs (Optional)")
@@ -343,7 +353,10 @@ with tab1:
                     with col2:
                         st.button("Remove", key=f"remove_review_{business}_{url}", on_click=remove_business_review_url, args=(business, url))
             else:
-                st.info(f"No review URLs added for {business} yet. This is optional.")
+                if is_portfolio_company:
+                    st.info(f"No review URLs added for {business} yet. This is optional.")
+                else:
+                    st.info("No review URLs added yet. This is optional.")
     else:
         st.info("No businesses added yet. Please add at least one business.")
     
