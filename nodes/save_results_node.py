@@ -346,7 +346,13 @@ def generate_word_document(om_sections, output_dir, selected_broker="Website Clo
     format_rich_text(doc, om_sections.get('industry_overview', ''))
     
     # Save the document
-    output_file = f"{output_dir}/Offer_Memorandum.docx"
+    # Create a safe filename using the company name
+    if main_company_name and main_company_name.strip():
+        safe_name = ''.join(c if c.isalnum() else '_' for c in main_company_name.strip())
+        output_file = f"{output_dir}/{safe_name}_Offer_Memorandum.docx"
+    else:
+        output_file = f"{output_dir}/Offer_Memorandum.docx"
+    
     doc.save(output_file)
     print(f"Word document generated successfully: {output_file}")
     

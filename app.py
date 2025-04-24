@@ -514,10 +514,15 @@ with tab2:
             
             # Display download button for the Word document
             with open(result["word_document_path"], "rb") as file:
+                # Get main company name for filename
+                company_name = st.session_state.main_company_name.strip() or "Offer_Memorandum"
+                # Replace spaces and special characters with underscores for filename
+                safe_company_name = ''.join(c if c.isalnum() else '_' for c in company_name)
+                
                 st.download_button(
                     label="Download Word Document",
                     data=file,
-                    file_name="Offer_Memorandum.docx",
+                    file_name=f"{safe_company_name}_OM.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
             
