@@ -72,8 +72,9 @@ def consolidate_info_node(state: GraphState) -> GraphState:
         """
     print(is_portfolio, special_instructions)
     consolidate_data_prompt_template = """
-    You are an expert business analyst and writer. Given the following sources of data about a business, merge them into a single source of information. Keep as much information as possible from all sources.
-    Also clearly identify the name of the business they are trying to sell.
+    You are an expert business analyst and writer. Given the following sources of data about the business, merge them into a single source of information. Keep as much information as possible from all sources.
+    The business name is {main_company_name}.
+
     {special_instructions}
     Seller Interview Data:
     {interview_data}
@@ -89,7 +90,8 @@ def consolidate_info_node(state: GraphState) -> GraphState:
         partial_variables={
             "interview_data": interview_data, 
             "portfolio_data": formatted_portfolio_data,
-            "special_instructions": special_instructions
+            "special_instructions": special_instructions,
+            "main_company_name": main_company_name
         },
         template=consolidate_data_prompt_template,
     )
