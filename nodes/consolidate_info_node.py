@@ -29,6 +29,7 @@ def consolidate_info_node(state: GraphState) -> GraphState:
     interview_data = state.get("interview_data")
     portfolio_data = state.get("portfolio_data", PortfolioData())
     is_portfolio = state.get("is_portfolio", False)
+    main_company_name = state.get("main_company_name", "Main Company")
     
     # Initialize the OM sections if they don't exist
     om_sections = state.get("om_sections", {})

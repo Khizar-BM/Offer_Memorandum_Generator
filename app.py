@@ -19,6 +19,10 @@ if 'portfolio_businesses' not in st.session_state:
 if 'current_business' not in st.session_state:
     st.session_state.current_business = ""
 
+# Initialize main company name
+if 'main_company_name' not in st.session_state:
+    st.session_state.main_company_name = "Main Company"
+
 # Initialize broker selection
 if 'selected_broker' not in st.session_state:
     st.session_state.selected_broker = "Website Closers"
@@ -229,6 +233,15 @@ with tab1:
     # Business data input UI
     st.markdown('<div class="section-title">Business Information</div>', unsafe_allow_html=True)
     
+    # Main Company Name input
+    st.text_input(
+        "Main Company/Parent Company Name:",
+        value=st.session_state.main_company_name,
+        placeholder="Enter parent company name",
+        key="main_company_name",
+        help="The parent company or overall business name for the portfolio"
+    )
+    
     # Add business input
     col1, col2 = st.columns([3, 1])
     with col1:
@@ -339,6 +352,14 @@ with tab1:
         st.markdown('<div class="portfolio-summary">', unsafe_allow_html=True)
         st.markdown('<div class="portfolio-summary-title">Portfolio Summary</div>', unsafe_allow_html=True)
         
+        # Display main company name at the top
+        st.markdown(f"""
+        <div style="margin-bottom: 20px; padding: 10px; background-color: rgba(33, 150, 243, 0.1); border-radius: 5px; border: 1px solid rgba(33, 150, 243, 0.2);">
+            <div style="font-size: 18px; font-weight: 600; color: #2196F3; margin-bottom: 5px;">Parent Company:</div>
+            <div style="font-size: 20px; font-weight: 700;">{st.session_state.main_company_name}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
         for business_name, business_data in st.session_state.portfolio_businesses.items():
             st.markdown(f"""
             <div class="business-card">
@@ -410,6 +431,7 @@ with tab1:
                 "current_section": "Company Overview",
                 "is_portfolio": is_portfolio_company,
                 "selected_broker": st.session_state.selected_broker,
+                "main_company_name": st.session_state.main_company_name,
                 "error": None
             }
             

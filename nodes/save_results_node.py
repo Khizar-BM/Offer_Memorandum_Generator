@@ -197,7 +197,7 @@ def format_rich_text(document, content):
         i += 1
 
 
-def generate_word_document(om_sections, output_dir, selected_broker="Website Closers"):
+def generate_word_document(om_sections, output_dir, selected_broker="Website Closers", main_company_name="Main Company"):
     """
     Generate a Word document from the OM sections.
     Also handles replacing 'Website Closers' with 'Seller Force' if needed.
@@ -242,6 +242,14 @@ def generate_word_document(om_sections, output_dir, selected_broker="Website Clo
     broker_run = broker_subtitle.add_run(selected_broker)
     broker_run.font.size = Pt(16)
     broker_run.font.bold = True
+    
+    # Add main company name
+    company_subtitle = doc.add_paragraph()
+    company_subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    company_run = company_subtitle.add_run(main_company_name)
+    company_run.font.size = Pt(20)
+    company_run.font.bold = True
+    company_run.font.color.rgb = RGBColor(0, 102, 204)  # Blue color
     
     # Add a page break after title page
     doc.add_page_break()
@@ -349,7 +357,8 @@ def save_results_node(state: GraphState) -> GraphState:
     """Save the generated OM sections to files and create a Word document"""
     om_sections = state.get("om_sections", {})
     selected_broker = state.get("selected_broker", "Website Closers")
-    print(f"Generating OM Document for {selected_broker}...")
+    main_company_name = state.get("main_company_name", "Main Company")
+    print(f"Generating OM Document for {selected_broker}, Company: {main_company_name}...")
     
     if not om_sections:
         return {**state, "error": "No OM sections to save"}
@@ -398,7 +407,7 @@ def save_results_node(state: GraphState) -> GraphState:
                 full_om.write("---\n\n")
         
         # Generate Word document
-        word_doc_path = generate_word_document(om_sections, output_dir, selected_broker)
+        word_doc_path = generate_word_document(om_sections, output_dir, selected_broker, main_company_name)
         
         print(f"Offer Memorandum generated successfully in the '{output_dir}' directory.")
         return {**state, "word_document_path": word_doc_path, "error": None}
