@@ -18,6 +18,10 @@ CORRECT_PASSWORD = os.getenv("APP_PASSWORD", "WebsiteClosers2024")
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
+# Initialize password error flag
+if 'password_error' not in st.session_state:
+    st.session_state.password_error = False
+
 # Initialize session state for portfolio businesses
 if 'portfolio_businesses' not in st.session_state:
     st.session_state.portfolio_businesses = {}
@@ -38,9 +42,10 @@ if 'selected_broker' not in st.session_state:
 def authenticate():
     if st.session_state.password == CORRECT_PASSWORD:
         st.session_state.authenticated = True
+        st.session_state.password = ""
     else:
         st.session_state.password = ""
-        st.error("Incorrect password. Please try again.")
+        st.session_state.password_error = True
 
 # Function to logout
 def logout():
@@ -177,33 +182,120 @@ st.markdown("""
     .login-container {
         max-width: 400px;
         margin: 100px auto;
-        padding: 30px;
-        background-color: #f8f9fa;
+        padding: 40px;
+        background-color: white;
         border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e0e0e0;
     }
     .login-title {
-        font-size: 24px;
+        font-size: 28px;
         font-weight: bold;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
         text-align: center;
         color: #2196F3;
+    }
+    .login-icon {
+        font-size: 50px;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #2196F3;
+    }
+    .login-subtitle {
+        font-size: 16px;
+        text-align: center;
+        margin-bottom: 30px;
+        color: #757575;
+    }
+    .login-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #f5f7fa;
+        background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        z-index: -1;
+    }
+    .login-input {
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        padding: 10px 15px;
+        font-size: 16px;
+        margin-bottom: 20px;
+        width: 100%;
+    }
+    .login-button {
+        background-color: #2196F3;
+        color: white;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 5px;
+        border: none;
+        width: 100%;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .login-button:hover {
+        background-color: #1976D2;
+    }
+    .login-error {
+        color: #f44336;
+        margin-top: 15px;
+        text-align: center;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: rgba(244, 67, 54, 0.1);
     }
     .logout-button {
         position: absolute;
         top: 20px;
         right: 20px;
         z-index: 100;
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 5px;
+    }
+    .logout-button button {
+        font-weight: 500;
+        color: #607D8B;
+        border: 1px solid #CFD8DC;
+        background-color: white;
+        transition: all 0.3s;
+    }
+    .logout-button button:hover {
+        color: #F44336;
+        border-color: #FFCDD2;
+        background-color: #FFEBEE;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # Authentication Logic
 if not st.session_state.authenticated:
+    # Add background
+    st.markdown('<div class="login-background"></div>', unsafe_allow_html=True)
+    
     # Login form
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<div class="login-icon">📄</div>', unsafe_allow_html=True)
     st.markdown('<div class="login-title">Offer Memorandum Generator</div>', unsafe_allow_html=True)
-    st.text_input("Enter Password", type="password", key="password", on_change=authenticate)
+    st.markdown('<div class="login-subtitle">Professional OM generation for business brokers</div>', unsafe_allow_html=True)
+    
+    # Custom input field with better styling
+    st.markdown('<p style="font-weight: 500; margin-bottom: 8px;">Password</p>', unsafe_allow_html=True)
+    password = st.text_input("", type="password", key="password", label_visibility="collapsed")
+    
+    # Login button
+    if st.button("Login", key="login_button", on_click=authenticate, type="primary"):
+        pass
+    
+    # Error message handling
+    if "password_error" in st.session_state and st.session_state.password_error:
+        st.markdown('<div class="login-error">Incorrect password. Please try again.</div>', unsafe_allow_html=True)
+        st.session_state.password_error = False
+        
     st.markdown('</div>', unsafe_allow_html=True)
 else:
     # Logout button
