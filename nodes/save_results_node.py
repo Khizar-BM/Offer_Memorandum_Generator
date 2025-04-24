@@ -346,12 +346,8 @@ def generate_word_document(om_sections, output_dir, selected_broker="Website Clo
     format_rich_text(doc, om_sections.get('industry_overview', ''))
     
     # Save the document
-    # Create a safe filename using the company name
-    if main_company_name and main_company_name.strip():
-        safe_name = ''.join(c if c.isalnum() else '_' for c in main_company_name.strip())
-        output_file = f"{output_dir}/{safe_name}_Offer_Memorandum.docx"
-    else:
-        output_file = f"{output_dir}/Offer_Memorandum.docx"
+    # Use a fixed filename for the saved file
+    output_file = f"{output_dir}/Offer_Memorandum.docx"
     
     doc.save(output_file)
     print(f"Word document generated successfully: {output_file}")
@@ -387,31 +383,8 @@ def save_results_node(state: GraphState) -> GraphState:
         output_dir = "output"
         os.makedirs(output_dir, exist_ok=True)
         
-        # Create a combined markdown file
-        with open(f"{output_dir}/full_offer_memorandum.md", "w") as full_om:
-            full_om.write("# OFFER MEMORANDUM\n\n")
-            
-            # Add each section to the full document
-            for section_name, content in om_sections.items():
-                # Handle section titles for business-specific reviews
-                if section_name.startswith('customer_reviews_'):
-                    # Extract business name from the section key (format: customer_reviews_BusinessName)
-                    business_name = section_name[len('customer_reviews_'):]
-                    section_title = f'Customer Reviews - {business_name}'
-                else:
-                    # Regular section title formatting
-                    section_title = ' '.join(word.capitalize() for word in section_name.split('_'))
-                
-                # Write to individual file
-                with open(f"{output_dir}/{section_name}.md", "w") as section_file:
-                    section_file.write(f"# {section_title}\n\n")
-                    section_file.write(content)
-                
-                # Add to full document
-                full_om.write(f"## {section_title}\n\n")
-                full_om.write(f"{content}\n\n")
-                full_om.write("---\n\n")
-        
+       
+             
         # Generate Word document
         word_doc_path = generate_word_document(om_sections, output_dir, selected_broker, main_company_name)
         
