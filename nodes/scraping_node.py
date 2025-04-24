@@ -86,7 +86,7 @@ def scrape_reviews_node(state: GraphState) -> GraphState:
                 data = app.extract(
                     urls,
                     {
-                        'prompt': "Get all reviews from this page. After that, filter them by 5 star ratings if ratings are available",
+                        'prompt': "Get all reviews from this page. After that, filter them by 5 star ratings if ratings are available. Return only the review text.",
                         'schema': ReviewData.model_json_schema()
                     }
                 )

@@ -1,3 +1,3 @@
 # Facts Sheet
 
-9-Year-Old Business| 92% of Sales via Amazon| 23% Customer Repeat Rate| $43.72 Average Order Value| 95% Inventory Turnover in 45 Days| 14 Total SKUs Offered| 97% Fulfillment By Amazon
+70% OHC Ownership| 100% Ownership of SlingShop LLC| Strong Q4 Sales for Bril| Hootie Amazon Rating: 4.4 Stars| Keyzmo Amazon Rating: 4.5 Stars| Robust Affiliate Sales: 51% for Keyzmo| Focused Growth on TikTok Affiliates

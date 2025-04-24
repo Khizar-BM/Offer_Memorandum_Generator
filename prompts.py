@@ -1,5 +1,5 @@
 section_generator_prompt_template = """
-    You are an expert writer used to generating Offer Memorandums. You are tasked with creating the {section_title} section of an Offer Memorandum for a business.
+    You are an expert writer used to generating Offer Memorandums. You are tasked with creating the {section_title} section of an Offer Memorandum for a business. Dont use the word "Enterprise". Use "business", "brand" or "company" instead.
     
     Use the following context about the business:
     {context}
@@ -16,7 +16,7 @@ section_generator_prompt_template = """
 
 facts_sheet_prompt_template = """
     You are an expert writer used to generating Offer Memorandums. You are tasked writing a list of Key Valuation Points for a business.
-    
+    Dont use the word "Enterprise". Use "business", "brand" or "company" instead.
     Use the following context about the business:
     {context}
     
@@ -34,7 +34,7 @@ facts_sheet_prompt_template = """
 scaling_strategy_prompt_template = """
     You are an expert writer and analyst used to generating Offer Memorandums. You are tasked with identifying the key methods for scaling a particular business.
     Frame the scaling strategy as a confident roadmap, not a wishlist. Be specific, back it with performance insights, and align it with what’s already working. Speak the language of both marketers and investors — strategic but concrete, aspirational but grounded in numbers.
-    
+    Dont use the word "Enterprise". Use "business", "brand" or "company" instead.
     Use the following context about the business:
     {context}
     
@@ -50,7 +50,8 @@ scaling_strategy_prompt_template = """
 
 company_summary_prompt_template = """
     You are an expert writer used to generating Offer Memorandums. You are tasked with creating the Company Summary section of an Offer Memorandum for a business.
-    
+    Dont use the word "Enterprise". Use "business", "brand" or "company" instead. Also ensure that there is not exact duplication of information from the Company Overview section, as duplication hurts SEO.
+    DO NOT REPEAT THE SAME INFORMATION IN THE COMPANY OVERVIEW SECTION.
     Use the following context about the business:
     {context}
 
@@ -64,7 +65,7 @@ company_summary_prompt_template = """
 
 company_intro_prompt_template = """
     You are an expert writer used to generating Offer Memorandums. You are tasked with creating the Company Introduction section of an Offer Memorandum for a business.
-    Highlight the strengths of the business.
+    Highlight the strengths of the business. Dont use the word "Enterprise". Use "business", "brand" or "company" instead.
     Also ensure that there is not exact duplication of information from the Company Overview section, as duplication hurts SEO.
 
     
@@ -81,7 +82,7 @@ company_intro_prompt_template = """
 
 marketplace_overview_prompt_template = """
     You are an expert writer used to generating Offer Memorandums. Given the following context about a business, write a Marketplace Content section for an Offer Memorandum.
-    
+    Dont use the word "Enterprise". Use "business", "brand" or "company" instead.
     Use the following context about the business:
     {context}
 
@@ -97,7 +98,7 @@ marketplace_overview_prompt_template = """
 
 about_us_prompt_template = """
     You are an expert business analyst and writer. Given the following context about a business, write an About Us section as it would appear on a website. Don't make it longer than 2 paragraphs.
-
+    Dont use the word "Enterprise". Use "business", "brand" or "company" instead.
     {special_instructions}
     
     Use the following context about the business:
@@ -107,7 +108,7 @@ about_us_prompt_template = """
 
 industry_overview_prompt_template = """
     You are an expert business analyst and writer. Given the following context about a business, write an overview about that industry.
-    
+    Dont use the word "Enterprise". Use "business", "brand" or "company" instead.
     Use the following context about the business:
     {context}
     
