@@ -217,27 +217,25 @@ st.markdown("""
         background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         z-index: -1;
     }
-    .login-input {
-        border: 1px solid #e0e0e0;
-        border-radius: 5px;
-        padding: 10px 15px;
-        font-size: 16px;
+    /* Hide all Streamlit default elements when on login page */
+    .login-mode .stApp > header {
+        display: none;
+    }
+    .login-mode .stApp > footer {
+        display: none;
+    }
+    .login-mode .main .block-container {
+        padding-top: 0;
+        padding-bottom: 0;
+        max-width: 100%;
+    }
+    /* Style the password field */
+    .login-password-field {
+        max-width: 100%;
         margin-bottom: 20px;
-        width: 100%;
     }
-    .login-button {
-        background-color: #2196F3;
-        color: white;
-        font-weight: 600;
-        padding: 12px 20px;
-        border-radius: 5px;
-        border: none;
-        width: 100%;
-        cursor: pointer;
-        transition: background-color 0.3s;
-    }
-    .login-button:hover {
-        background-color: #1976D2;
+    .login-password-field input {
+        max-width: 100%;
     }
     .login-error {
         color: #f44336;
@@ -274,6 +272,27 @@ st.markdown("""
 
 # Authentication Logic
 if not st.session_state.authenticated:
+    # Add login mode class to body
+    st.markdown('''
+    <style>
+    body {
+        background-color: transparent;
+    }
+    div[data-testid="stAppViewContainer"] {
+        background-color: transparent;
+    }
+    div[data-testid="stVerticalBlock"] {
+        background-color: transparent;
+    }
+    .stApp {
+        background-color: transparent !important;
+    }
+    </style>
+    <script>
+        document.body.classList.add('login-mode');
+    </script>
+    ''', unsafe_allow_html=True)
+    
     # Add background
     st.markdown('<div class="login-background"></div>', unsafe_allow_html=True)
     
@@ -285,11 +304,22 @@ if not st.session_state.authenticated:
     
     # Custom input field with better styling
     st.markdown('<p style="font-weight: 500; margin-bottom: 8px;">Password</p>', unsafe_allow_html=True)
-    password = st.text_input("", type="password", key="password", label_visibility="collapsed")
+    
+    # Container to control width
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        password = st.text_input(
+            "", 
+            type="password", 
+            key="password", 
+            label_visibility="collapsed"
+        )
     
     # Login button
-    if st.button("Login", key="login_button", on_click=authenticate, type="primary"):
-        pass
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("Login", key="login_button", on_click=authenticate, type="primary", use_container_width=True):
+            pass
     
     # Error message handling
     if "password_error" in st.session_state and st.session_state.password_error:
