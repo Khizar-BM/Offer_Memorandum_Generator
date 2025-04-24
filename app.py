@@ -19,6 +19,10 @@ if 'portfolio_businesses' not in st.session_state:
 if 'current_business' not in st.session_state:
     st.session_state.current_business = ""
 
+# Initialize broker selection
+if 'selected_broker' not in st.session_state:
+    st.session_state.selected_broker = "Website Closers"
+
 # Function to add a business to the portfolio
 def add_business():
     business_name = st.session_state.business_name_input
@@ -156,6 +160,13 @@ st.markdown('<div class="info-text">Generate professional Offer Memoranda for bu
 # Sidebar
 with st.sidebar:
     st.markdown('<div class="section-title">Settings</div>', unsafe_allow_html=True)
+    
+    # Broker selection
+    st.session_state.selected_broker = st.selectbox(
+        "Select Broker:",
+        ["Website Closers", "Seller Force"],
+        index=0 if st.session_state.selected_broker == "Website Closers" else 1
+    )
     
     # Input method selection
     input_method = st.radio(
@@ -398,6 +409,7 @@ with tab1:
                 "company_context": "",
                 "current_section": "Company Overview",
                 "is_portfolio": is_portfolio_company,
+                "selected_broker": st.session_state.selected_broker,
                 "error": None
             }
             
@@ -491,11 +503,17 @@ with tab2:
             
             # Create tabs for each section
             tabs = st.tabs([section[0] for section in all_sections])
+
+            # Get the selected broker from session state
+            selected_broker = st.session_state.get("selected_broker", "Website Closers")
             
             for i, (section_name, section_key) in enumerate(all_sections):
                 with tabs[i]:
                     content = result.get("om_sections", {}).get(section_key, "")
                     if content:
+                        # Replace "Website Closers" with "Seller Force" in the displayed content if that broker is selected
+                        if selected_broker == "Seller Force":
+                            content = content.replace("Website Closers", "Seller Force")
                         st.markdown(content)
                     else:
                         st.info(f"No content generated for {section_name}")

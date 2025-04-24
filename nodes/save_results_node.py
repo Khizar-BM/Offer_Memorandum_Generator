@@ -197,8 +197,11 @@ def format_rich_text(document, content):
         i += 1
 
 
-def generate_word_document(om_sections, output_dir):
-    """Generate a Word document with all OM sections"""
+def generate_word_document(om_sections, output_dir, selected_broker="Website Closers"):
+    """
+    Generate a Word document from the OM sections.
+    Also handles replacing 'Website Closers' with 'Seller Force' if needed.
+    """
     # Create a new Word document
     doc = Document()
     
@@ -232,6 +235,13 @@ def generate_word_document(om_sections, output_dir):
     for run in title.runs:
         run.font.size = Pt(24)
         run.font.bold = True
+    
+    # Add broker name subtitle
+    broker_subtitle = doc.add_paragraph()
+    broker_subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    broker_run = broker_subtitle.add_run(selected_broker)
+    broker_run.font.size = Pt(16)
+    broker_run.font.bold = True
     
     # Add a page break after title page
     doc.add_page_break()
@@ -338,12 +348,26 @@ def generate_word_document(om_sections, output_dir):
 def save_results_node(state: GraphState) -> GraphState:
     """Save the generated OM sections to files and create a Word document"""
     om_sections = state.get("om_sections", {})
-    print("Generating OM Document...")
+    selected_broker = state.get("selected_broker", "Website Closers")
+    print(f"Generating OM Document for {selected_broker}...")
     
     if not om_sections:
         return {**state, "error": "No OM sections to save"}
     
     try:
+        # Replace "Website Closers" with "Seller Force" if Seller Force is selected
+        if selected_broker == "Seller Force":
+            print("Replacing 'Website Closers' with 'Seller Force' in all content...")
+            # Create a copy of the sections dict with modified content
+            modified_sections = {}
+            for section_name, content in om_sections.items():
+                # Replace all instances of "Website Closers" with "Seller Force"
+                modified_content = content.replace("Website Closers", "Seller Force")
+                modified_sections[section_name] = modified_content
+            
+            # Update the sections for further processing
+            om_sections = modified_sections
+        
         # Create output directory
         output_dir = "output"
         os.makedirs(output_dir, exist_ok=True)
@@ -374,7 +398,7 @@ def save_results_node(state: GraphState) -> GraphState:
                 full_om.write("---\n\n")
         
         # Generate Word document
-        word_doc_path = generate_word_document(om_sections, output_dir)
+        word_doc_path = generate_word_document(om_sections, output_dir, selected_broker)
         
         print(f"Offer Memorandum generated successfully in the '{output_dir}' directory.")
         return {**state, "word_document_path": word_doc_path, "error": None}
