@@ -7,6 +7,8 @@ from om_langgraph import build_graph
 from models import PortfolioData
 from langgraph.graph import END
 from langgraph.types import StreamWriter
+import pypdf
+from docx import Document
 
 # Load environment variables
 load_dotenv()
@@ -98,6 +100,22 @@ def add_business_review_url():
 def remove_business_review_url(business, url):
     if business in st.session_state.portfolio_businesses and url in st.session_state.portfolio_businesses[business]["review_urls"]:
         st.session_state.portfolio_businesses[business]["review_urls"].remove(url)
+
+# Function to extract text from PDF file
+def extract_text_from_pdf(file):
+    pdf_reader = pypdf.PdfReader(file)
+    text = ""
+    for page_num in range(len(pdf_reader.pages)):
+        text += pdf_reader.pages[page_num].extract_text()
+    return text
+
+# Function to extract text from DOCX file
+def extract_text_from_docx(file):
+    doc = Document(file)
+    text = ""
+    for para in doc.paragraphs:
+        text += para.text + "\n"
+    return text
 
 # Page configuration
 st.set_page_config(
@@ -285,10 +303,25 @@ else:
                 help="Paste the transcript of your seller interview here"
             )
         else:  # Upload File
-            uploaded_file = st.file_uploader("Upload interview transcript", type=["txt"])
+            uploaded_file = st.file_uploader("Upload interview transcript", type=["txt", "docx", "pdf"])
             if uploaded_file is not None:
-                interview_data = uploaded_file.getvalue().decode("utf-8")
-                st.success("File uploaded successfully!")
+                try:
+                    file_type = uploaded_file.name.split('.')[-1].lower()
+                    
+                    if file_type == 'txt':
+                        interview_data = uploaded_file.getvalue().decode("utf-8")
+                    elif file_type == 'pdf':
+                        interview_data = extract_text_from_pdf(uploaded_file)
+                    elif file_type == 'docx':
+                        interview_data = extract_text_from_docx(uploaded_file)
+                    
+                    st.success(f"File uploaded successfully! Extracted {len(interview_data)} characters.")
+                    
+                    # Show a preview of the extracted text
+                    with st.expander("Preview extracted text"):
+                        st.text(interview_data[:500] + "..." if len(interview_data) > 500 else interview_data)
+                except Exception as e:
+                    st.error(f"Error processing file: {str(e)}")
         
         # Business data input UI
         st.markdown('<div class="section-title">Business Information</div>', unsafe_allow_html=True)
