@@ -277,7 +277,7 @@ else:
         # Portfolio company toggle
         is_portfolio_company = st.checkbox(
             "Is this for multiple businesses?",
-            value=True,
+            value=False,
             help="Check this if the OM is for multiple businesses in a portfolio"
         )
         
