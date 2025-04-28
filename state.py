@@ -10,7 +10,6 @@ class GraphState(TypedDict):
     
     # URLs mapping for businesses
     portfolio_website_urls: Dict[str, List[str]]  # Business name -> URLs mapping for websites
-    portfolio_review_urls: Dict[str, List[str]]  # Business name -> URLs mapping for reviews
     portfolio_data: PortfolioData  # Consolidated business data
     
     company_context: str  # Consolidated company context

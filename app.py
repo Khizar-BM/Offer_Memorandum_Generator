@@ -62,8 +62,7 @@ def add_business():
     business_name = st.session_state.business_name_input
     if business_name and business_name not in st.session_state.portfolio_businesses:
         st.session_state.portfolio_businesses[business_name] = {
-            "website_urls": [],
-            "review_urls": []
+            "website_urls": []
         }
         st.session_state.current_business = business_name
         st.session_state.business_name_input = ""
@@ -87,19 +86,6 @@ def add_business_url():
 def remove_business_url(business, url):
     if business in st.session_state.portfolio_businesses and url in st.session_state.portfolio_businesses[business]["website_urls"]:
         st.session_state.portfolio_businesses[business]["website_urls"].remove(url)
-
-# Function to add a review URL to the current business
-def add_business_review_url():
-    business = st.session_state.current_business
-    url = st.session_state.business_review_input
-    if business and url and url not in st.session_state.portfolio_businesses[business]["review_urls"]:
-        st.session_state.portfolio_businesses[business]["review_urls"].append(url)
-        st.session_state.business_review_input = ""
-
-# Function to remove a review URL from a business
-def remove_business_review_url(business, url):
-    if business in st.session_state.portfolio_businesses and url in st.session_state.portfolio_businesses[business]["review_urls"]:
-        st.session_state.portfolio_businesses[business]["review_urls"].remove(url)
 
 # Function to extract text from PDF file
 def extract_text_from_pdf(file):
@@ -352,8 +338,7 @@ else:
         if not is_portfolio_company:
             if not st.session_state.portfolio_businesses:
                 st.session_state.portfolio_businesses["Main Business"] = {
-                    "website_urls": [],
-                    "review_urls": []
+                    "website_urls": []
                 }
                 st.session_state.current_business = "Main Business"
             elif "Main Business" not in st.session_state.portfolio_businesses:
@@ -418,45 +403,17 @@ else:
                 # Display URLs with remove buttons
                 if st.session_state.portfolio_businesses[business]["website_urls"]:
                     for url in st.session_state.portfolio_businesses[business]["website_urls"]:
-                        col1, col2 = st.columns([5, 1])
-                        with col1:
-                            st.markdown(f"<div class='url-text'>{url}</div>", unsafe_allow_html=True)
-                        with col2:
-                            st.button("Remove", key=f"remove_{business}_{url}", on_click=remove_business_url, args=(business, url))
+                        with st.container():
+                            col1, col2 = st.columns([0.9, 0.1])
+                            with col1:
+                                st.text(url)
+                            with col2:
+                                st.button("Remove", key=f"remove_url_{business}_{url}", on_click=remove_business_url, args=(business, url))
                 else:
                     if is_portfolio_company:
                         st.info(f"No website URLs added for this brand yet.")
                     else:
                         st.info("No website URLs added yet.")
-                
-                # Review URLs section for this business
-                st.markdown("### Review URLs (Optional)")
-                
-                # Review URL input with add button
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    st.text_input(
-                        "Review URL:",
-                        placeholder="https://www.google.com/business/...",
-                        key="business_review_input"
-                    )
-                with col2:
-                    st.markdown('<div style="padding-top: 26px;"></div>', unsafe_allow_html=True)
-                    st.button("Add Review URL", key="add_business_review_url", on_click=add_business_review_url)
-                
-                # Display review URLs with remove buttons
-                if st.session_state.portfolio_businesses[business]["review_urls"]:
-                    for url in st.session_state.portfolio_businesses[business]["review_urls"]:
-                        col1, col2 = st.columns([5, 1])
-                        with col1:
-                            st.markdown(f"<div class='url-text'>{url}</div>", unsafe_allow_html=True)
-                        with col2:
-                            st.button("Remove", key=f"remove_review_{business}_{url}", on_click=remove_business_review_url, args=(business, url))
-                else:
-                    if is_portfolio_company:
-                        st.info(f"No review URLs added for this brand yet. This is optional.")
-                    else:
-                        st.info("No review URLs added yet. This is optional.")
         else:
             st.info("No brands added yet. Please add at least one brand.")
         
@@ -480,10 +437,6 @@ else:
                     <div class="business-stat">
                         <span class="business-stat-label">Website URLs:</span>
                         <span class="business-stat-value">{len(business_data["website_urls"])}</span>
-                    </div>
-                    <div class="business-stat">
-                        <span class="business-stat-label">Review URLs:</span>
-                        <span class="business-stat-value">{len(business_data["review_urls"])}</span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -522,14 +475,9 @@ else:
                 # Initialize portfolio data structure
                 portfolio_data = PortfolioData()
                 
-                # Get website and review URLs from portfolio businesses
+                # Get website URLs from portfolio businesses
                 portfolio_website_urls = {
                     business: data["website_urls"] 
-                    for business, data in st.session_state.portfolio_businesses.items()
-                }
-                
-                portfolio_review_urls = {
-                    business: data["review_urls"] 
                     for business, data in st.session_state.portfolio_businesses.items()
                 }
                 
@@ -537,7 +485,6 @@ else:
                 initial_state = {
                     "interview_data": interview_data,
                     "portfolio_website_urls": portfolio_website_urls,
-                    "portfolio_review_urls": portfolio_review_urls,
                     "portfolio_data": portfolio_data,
                     "om_sections": {},
                     "company_context": "",
@@ -627,19 +574,6 @@ else:
                     ("Scaling Opportunities", "scaling_opportunities"),
                     ("Industry Overview", "industry_overview")
                 ]
-                
-                # Add customer reviews - handle both single and portfolio business reviews
-                review_sections = []
-                for key in result.get("om_sections", {}):
-                    if key.startswith("customer_reviews_"):
-                        business_name = key[len("customer_reviews_"):]
-                        review_sections.append((f"Customer Reviews - {business_name}", key))
-                    elif key == "customer_reviews":
-                        review_sections.append(("Customer Reviews", "customer_reviews"))
-                
-                # Add reviews to all sections
-                if review_sections:
-                    all_sections.extend(review_sections)
                 
                 # Create tabs for each section
                 tabs = st.tabs([section[0] for section in all_sections])

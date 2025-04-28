@@ -299,22 +299,6 @@ def generate_word_document(om_sections, output_dir, selected_broker="Website Clo
     format_section_title(doc, "COMPANY SUMMARY")
     format_rich_text(doc, om_sections.get('company_summary', ''))
     
-    # Add customer reviews section
-    # Check for portfolio business reviews (keys like 'customer_reviews_BusinessName')
-    review_sections = [key for key in om_sections if key.startswith('customer_reviews_')]
-    
-    if review_sections:
-        # Portfolio business reviews - add each as a separate section
-        format_section_title(doc, "CUSTOMER REVIEWS")
-        
-        for review_key in review_sections:
-            # The review content already includes the business name as a heading
-            format_rich_text(doc, om_sections.get(review_key, ''))
-    elif 'customer_reviews' in om_sections and om_sections['customer_reviews']:
-        # Single business reviews
-        format_section_title(doc, "CUSTOMER REVIEWS")
-        format_rich_text(doc, om_sections.get('customer_reviews', ''))
-    
     # Add page break
     doc.add_page_break()
     

@@ -9,7 +9,7 @@ from nodes.marketplace_content_node import marketplace_content_node
 from nodes.save_results_node import save_results_node
 from nodes.load_interview_data_node import load_interview_data
 from nodes.scaling_opportunity_node import scaling_strategy_node
-from nodes.scraping_node import scrape_website_node, scrape_reviews_node
+from nodes.scraping_node import scrape_website_node
 from nodes.company_overview_node import company_overview_node
 from state import GraphState
 from dotenv import load_dotenv
@@ -105,7 +105,6 @@ def build_graph():
     node_descriptions = {
         "load_interview_data": "Loading interview data",
         "scrape_website": "Scraping websites",
-        "scrape_reviews": "Scraping customer reviews",
         "consolidate_info": "Consolidating information",
         "company_overview": "Generating Company Overview",
         "marketplace_content": "Generating Marketplace Analysis",
@@ -122,7 +121,6 @@ def build_graph():
     node_functions = {
         "load_interview_data": load_interview_data,
         "scrape_website": scrape_website_node,
-        "scrape_reviews": scrape_reviews_node,
         "consolidate_info": consolidate_info_node,
         "company_overview": company_overview_node,
         "marketplace_content": marketplace_content_node,
@@ -139,7 +137,6 @@ def build_graph():
     node_order = [
         "load_interview_data",
         "scrape_website",
-        "scrape_reviews",
         "consolidate_info",
         "company_overview",
         "marketplace_content",
@@ -177,8 +174,7 @@ def build_graph():
     # Add edges - Define the flow
     workflow.add_edge(START, "load_interview_data")
     workflow.add_edge("load_interview_data", "scrape_website")
-    workflow.add_edge("scrape_website", "scrape_reviews")
-    workflow.add_edge("scrape_reviews", "consolidate_info")
+    workflow.add_edge("scrape_website", "consolidate_info")
     workflow.add_edge("consolidate_info", "company_overview")
     workflow.add_edge("company_overview", "marketplace_content")
     workflow.add_edge("marketplace_content", "company_intro")

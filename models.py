@@ -25,23 +25,10 @@ class BusinessWebsiteData(BaseModel):
     about_us: str = Field(description="About us section from website")
     website_content: str = Field(description="General content from the website")
 
-class BusinessReviewData(BaseModel):
-    """Review data for a single business"""
-    business_name: str = Field(description="Name of the business")
-    five_star_reviews: List[str] = Field(description="List of 5-star reviews for the business")
-    
-    def __str__(self):
-        return f"{self.business_name} - Five Star Reviews: {len(self.five_star_reviews)}"
-
-
 class PortfolioData(BaseModel):
     """Data structure for portfolio with multiple businesses"""
     business_websites: Dict[str, BusinessWebsiteData] = Field(
         default_factory=dict,
         description="Website data for each business in the portfolio"
-    )
-    business_reviews: Dict[str, BusinessReviewData] = Field(
-        default_factory=dict,
-        description="Review data for each business in the portfolio"
     )
 
