@@ -16,7 +16,7 @@ class GraphState(TypedDict):
     om_sections: Dict[str, str]  # Generated OM sections
     current_section: str  # Current section being processed
     is_portfolio: bool  # Whether the OM is for multiple businesses
-    selected_broker: str  # The selected broker (Website Closers or Seller Force)
+    selected_broker: str  # The selected broker (Website Closers or SellerForce)
     main_company_name: str  # The name of the main/parent company
     error: Optional[str]  # Any error messages
   

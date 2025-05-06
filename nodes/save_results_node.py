@@ -200,7 +200,7 @@ def format_rich_text(document, content):
 def generate_word_document(om_sections, output_dir, selected_broker="Website Closers", main_company_name="Main Company"):
     """
     Generate a Word document from the OM sections.
-    Also handles replacing 'Website Closers' with 'Seller Force' if needed.
+    Also handles replacing 'Website Closers' with 'SellerForce' if needed.
     """
     # Create a new Word document
     doc = Document()
@@ -350,14 +350,14 @@ def save_results_node(state: GraphState) -> GraphState:
         return {**state, "error": "No OM sections to save"}
     
     try:
-        # Replace "Website Closers" with "Seller Force" if Seller Force is selected
-        if selected_broker == "Seller Force":
-            print("Replacing 'Website Closers' with 'Seller Force' in all content...")
+        # Replace "Website Closers" with "SellerForce" if SellerForce is selected
+        if selected_broker == "SellerForce":
+            print("Replacing 'Website Closers' with 'SellerForce' in all content...")
             # Create a copy of the sections dict with modified content
             modified_sections = {}
             for section_name, content in om_sections.items():
-                # Replace all instances of "Website Closers" with "Seller Force"
-                modified_content = content.replace("Website Closers", "Seller Force")
+                # Replace all instances of "Website Closers" with "SellerForce"
+                modified_content = content.replace("Website Closers", "SellerForce")
                 modified_sections[section_name] = modified_content
             
             # Update the sections for further processing

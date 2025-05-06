@@ -250,7 +250,7 @@ else:
         # Broker selection
         st.session_state.selected_broker = st.selectbox(
             "Select Broker:",
-            ["Website Closers", "Seller Force"],
+            ["Website Closers", "SellerForce"],
             index=0 if st.session_state.selected_broker == "Website Closers" else 1
         )
         
@@ -585,9 +585,9 @@ else:
                     with tabs[i]:
                         content = result.get("om_sections", {}).get(section_key, "")
                         if content:
-                            # Replace "Website Closers" with "Seller Force" in the displayed content if that broker is selected
-                            if selected_broker == "Seller Force":
-                                content = content.replace("Website Closers", "Seller Force")
+                            # Replace "Website Closers" with "SellerForce" in the displayed content if that broker is selected
+                            if selected_broker == "SellerForce":
+                                content = content.replace("Website Closers", "SellerForce")
                             st.markdown(content)
                         else:
                             st.info(f"No content generated for {section_name}")
