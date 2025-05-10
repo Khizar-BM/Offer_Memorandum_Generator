@@ -24,7 +24,7 @@ def company_summary_node(state: GraphState) -> GraphState:
     # Combine context
     instructions = """
 Ensure that there is not any information about the company's actual name or anything else that can identify it in the Company Summary.
-Also ensure that there is not exact duplication of information from the Company Overview section, as duplication hurts SEO. Keep the summary brief; 3 medium sized paragraphs is ideal.
+Also ensure that there is not exact duplication of information from the Company Overview section, as duplication hurts SEO. It should be focused on other things not already included, like scale opportunities, employees and third party contractors and other things either outlined in the context provided --- and of course --- other things it things are prudent to include in a business like this. Keep the summary brief; 3 medium sized paragraphs is ideal.
 """
 
     
