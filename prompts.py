@@ -52,14 +52,16 @@ company_summary_prompt_template = """
     You are an expert writer used to generating Offer Memorandums. You are tasked with creating the Company Summary section of an Offer Memorandum for a business.
     Dont use the word "Enterprise". Use "business", "brand" or "company" instead. Also ensure that there is not exact duplication of information from the Company Overview section, as duplication hurts SEO.
     DO NOT REPEAT THE SAME INFORMATION IN THE COMPANY OVERVIEW SECTION.
+
+    Here are the instructions specific to the Company Summary section:
+    {instructions}
+
     Use the following context about the business:
     {context}
 
     Here is an example of a Company Summary section. Make sure to follow the same format and writing style:
     {example}
     
-    Here are the instructions specific to the Company Summary section:
-    {instructions}
     
     """
 
